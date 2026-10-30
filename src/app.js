@@ -1,4 +1,5 @@
 import { PRODUCTS, CATEGORIES, MEDIA, money } from "./data.js";
+import { BRAND_MEDIA, LOOKBOOK_SLIDES } from "./brand-media.js";
 import "./styles.css";
 
 const root = document.getElementById("app");
@@ -18,7 +19,7 @@ const state = {
   category: "Todos", search: "", sort: "featured",
   cart: getSavedCart(), cartOpen: false, mobileMenu: false,
   productId: null, colorIndex: 0, size: "", photoIndex: 0,
-  formFeedback: "", notice: ""
+  formFeedback: "", notice: "", lookbookIndex: 0
 };
 
 const htmlSafe = value => String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -83,7 +84,7 @@ function categoryTiles() {
     ["Accesorios", PRODUCTS[7].image, "Accesorios"]
   ];
   return `<section class="section categories-section" aria-labelledby="category-title">
-    <div class="section-topline"><span>01 / EXPLORA</span><span>PIEZAS PARA CADA VERSIÓN DE TI</span></div>
+    <div class="section-topline"><span>05 / EXPLORA</span><span>PIEZAS PARA CADA VERSIÓN DE TI</span></div>
     <div class="section-heading"><div><p class="eyebrow">Discover your style</p><h2 id="category-title">Encuentra tu <em>esencia.</em></h2></div><a class="text-link" href="#/catalogo">Ver todo el catálogo ${icon("arrowup",17)}</a></div>
     <div class="category-grid">${tiles.map((item, index) => `<a href="#/catalogo" data-category="${item[0]}" class="category-card category-${index}">
       <img loading="lazy" src="${item[1]}" alt="Editorial ilustrativa de ${item[2]}" />
@@ -125,22 +126,46 @@ function home() {
         <div class="hero-vertical">EVERYWEAR — EVERY OCCASION</div>
       </section>
       <div class="marquee" aria-label="Everywear, estilo para cada día"><div class="marquee-inner">${Array(3).fill(`<span>EVERY DAY</span><span class="marquee-flower">✳</span><span>EVERY STYLE</span><span class="marquee-flower">✳</span><span>EVERY WEAR</span><span class="marquee-flower">✳</span>`).join("")}</div></div>
-      ${categoryTiles()}
-      <section class="section featured-section">
-        <div class="section-topline"><span>02 / THE EDIT</span><span>UNA SELECCIÓN, MIL POSIBILIDADES</span></div>
-        <div class="section-heading"><div><p class="eyebrow">The pieces we love</p><h2>Favoritos de <em>Everywear.</em></h2></div><a href="#/catalogo" class="text-link">Explorar la colección ${icon("arrowup",17)}</a></div>
-        <div class="products-grid featured-grid">${PRODUCTS.slice(0,4).map(productCard).join("")}</div>
-        <p class="demo-note">Selección ilustrativa. Fotografías y precios sujetos a confirmación.</p>
+      <section class="brand-story section reveal-on-scroll" id="about-us" aria-labelledby="brand-story-title">
+        <div class="section-topline"><span>01 / LA MARCA</span><span>EVERYWEAR — OUR WORLD</span></div>
+        <div class="brand-story-layout">
+          <div class="brand-story-copy">
+            <p class="eyebrow">A little more about us</p>
+            <h2 id="brand-story-title">Más que ropa.<br/><em>Una forma de ser.</em></h2>
+            <p>Creemos en la libertad de vestirte como te sientes. En los detalles que hacen diferente un outfit y en esas prendas que te acompañan una y otra vez.</p>
+            <span class="brand-story-script">Make it yours.</span>
+            <a class="text-link" href="#/catalogo">Descubre nuestra selección ${icon("arrowup",17)}</a>
+          </div>
+          <div class="brand-collage" aria-label="Imágenes de identidad visual de Everywear">
+            <figure class="collage-photo collage-store"><img src="${BRAND_MEDIA.store}" alt="Fachada de la boutique Everywear, con vitrinas y letrero de la marca" loading="lazy" /><figcaption>01 / OUR SPACE</figcaption></figure>
+            <figure class="collage-photo collage-bag"><img src="${BRAND_MEDIA.bag}" alt="Bolsa beige vainilla Everywear con su identidad gráfica" loading="lazy" /><figcaption>02 / OUR DETAILS</figcaption></figure>
+            <figure class="collage-photo collage-girl"><img src="${BRAND_MEDIA.girlBag}" alt="Modelo sosteniendo una bolsa de gran formato Everywear" loading="lazy" /><figcaption>03 / OUR STYLE</figcaption></figure>
+          </div>
+        </div>
       </section>
-      <section class="editorial">
-        <div class="editorial-photo"><img src="${MEDIA.story}" alt="Fotografía editorial de estilo y moda" loading="lazy" /><span class="editorial-photo-index">EVERYWEAR / 001</span></div>
-        <div class="editorial-copy">
-          <span class="editorial-stamp">E<span>✳</span>W</span>
-          <p class="eyebrow">A little more about us</p>
-          <h2>Más que ropa.<br/><em>Una forma de ser.</em></h2>
-          <p>Creemos en la libertad de vestirte como te sientes. En los detalles que hacen diferente un outfit y en esas prendas que te acompañan una y otra vez.</p>
-          <p class="editorial-signature">Make it yours.</p>
-          <a class="text-link editorial-link" href="#/catalogo">Conoce nuestra selección ${icon("arrowup",17)}</a>
+      <section class="lookbook-section reveal-on-scroll" id="lookbook" aria-labelledby="lookbook-title">
+        <div class="lookbook-shell">
+          <div class="section-topline"><span>02 / EDITORIAL</span><span>EDICIÓN 01 — EUROPA</span></div>
+          <div class="lookbook-header">
+            <div><p class="eyebrow">An invitation to explore</p><h2 id="lookbook-title">Everywear <em>lookbook.</em></h2></div>
+            <p>Un vistazo a nuestro universo: pequeños detalles, inspiración y nuevas formas de vestir.</p>
+          </div>
+          <div class="lookbook-body">
+            <div class="lookbook-aside"><span class="lookbook-star">✳</span><p class="lookbook-caption">THE EVERYWEAR JOURNAL</p><h3>Un libro.<br/><em>Muchas formas<br/>de ser tú.</em></h3><div class="lookbook-aside-bottom">OUR STORY IN FRAMES <span>↗</span></div></div>
+            <div class="lookbook-viewer">
+              <div class="lookbook-viewport" role="region" aria-roledescription="carrusel" aria-label="Lookbook fotográfico Everywear" tabindex="0">
+                <div class="lookbook-track" id="lookbook-track" style="transform:translate3d(-${state.lookbookIndex * 100}%,0,0)">
+                  ${LOOKBOOK_SLIDES.map((slide,i)=>`<div class="lookbook-slide" role="group" aria-roledescription="diapositiva" aria-label="${i+1} de ${LOOKBOOK_SLIDES.length}"><img src="${slide.image}" loading="${i===0 ? "eager" : "lazy"}" alt="${["Escena urbana frente a Zara y editorial Everywear","Prendas y gorra verde oliva del lookbook Everywear","Look urbano femenino con abrigo oscuro","Editorial con logotipo Everywear y bolsa de gran formato","Look con gafas de sol y detalle de denim","Fotografía de la campaña Go Follow Everywear"][i]}" draggable="false" /></div>`).join("")}
+                </div>
+              </div>
+              <div class="lookbook-navigation">
+                <div class="lookbook-counter"><strong id="lookbook-current">${String(state.lookbookIndex + 1).padStart(2,"0")}</strong><span class="lookbook-counter-rule"></span><span>${String(LOOKBOOK_SLIDES.length).padStart(2,"0")}</span></div>
+                <div class="lookbook-dots" role="group" aria-label="Elegir página del lookbook">${LOOKBOOK_SLIDES.map((_,i)=>`<button class="lookbook-dot ${i===state.lookbookIndex?"active":""}" data-action="lookbook-go" data-index="${i}" aria-label="Ir a página ${i+1}" aria-pressed="${i===state.lookbookIndex}"></button>`).join("")}</div>
+                <div class="lookbook-arrows"><button type="button" data-action="lookbook-prev" aria-label="Página anterior">${icon("back",21)}</button><button type="button" data-action="lookbook-next" aria-label="Siguiente página">${icon("arrow",21)}</button></div>
+              </div>
+            </div>
+          </div>
+          <div class="lookbook-bottom"><span>VISUAL JOURNAL / EVERYWEAR</span><span>DESLIZA O USA LAS FLECHAS PARA EXPLORAR</span></div>
         </div>
       </section>
       <section class="personal-shopper section" id="personal-shopper">
@@ -164,6 +189,13 @@ function home() {
           </form>
         </div>
       </section>
+      <section class="section featured-section">
+        <div class="section-topline"><span>04 / THE EDIT</span><span>UNA SELECCIÓN, MIL POSIBILIDADES</span></div>
+        <div class="section-heading"><div><p class="eyebrow">The pieces we love</p><h2>Favoritos de <em>Everywear.</em></h2></div><a href="#/catalogo" class="text-link">Explorar la colección ${icon("arrowup",17)}</a></div>
+        <div class="products-grid featured-grid">${PRODUCTS.slice(0,4).map(productCard).join("")}</div>
+        <p class="demo-note">Selección ilustrativa. Fotografías y precios sujetos a confirmación.</p>
+      </section>
+      ${categoryTiles()}
       <section class="closing-banner"><div><span>THE EVERYWEAR CLUB</span><h2>Wear it. <em>Own it.</em></h2><p>La mejor versión de tu estilo es la tuya.</p></div>${actionLink("Shop the edit", "#/catalogo", "button-light")}</section>
     </main>
   `;
@@ -260,9 +292,51 @@ function basket() {
     </aside></div>`;
 }
 
+
+let revealObserver;
+function observeReveals() {
+  if (!("IntersectionObserver" in window) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  revealObserver?.disconnect();
+  revealObserver = new IntersectionObserver(entries => {
+    for (const entry of entries) if (entry.isIntersecting) {
+      entry.target.classList.add("is-visible");
+      revealObserver?.unobserve(entry.target);
+    }
+  }, { threshold: 0.1, rootMargin: "0px 0px -30px 0px" });
+  document.querySelectorAll(".reveal-on-scroll").forEach(el => revealObserver.observe(el));
+}
+function updateLookbook() {
+  const track = document.getElementById("lookbook-track");
+  if (!track) return;
+  track.style.transform = "translate3d(-" + (state.lookbookIndex * 100) + "%,0,0)";
+  const current = document.getElementById("lookbook-current");
+  if (current) current.textContent = String(state.lookbookIndex + 1).padStart(2, "0");
+  document.querySelectorAll(".lookbook-dot").forEach((dot, i) => {
+    const active = i === state.lookbookIndex;
+    dot.classList.toggle("active", active);
+    dot.setAttribute("aria-pressed", String(active));
+  });
+}
+function moveLookbook(delta) {
+  state.lookbookIndex = (state.lookbookIndex + delta + LOOKBOOK_SLIDES.length) % LOOKBOOK_SLIDES.length;
+  updateLookbook();
+}
+let touchStart = null;
+root.addEventListener("pointerdown", event => {
+  if (event.target.closest(".lookbook-viewport")) touchStart = {x:event.clientX,y:event.clientY};
+}, {passive:true});
+root.addEventListener("pointerup", event => {
+  if (!touchStart || !event.target.closest(".lookbook-viewport")) { touchStart=null; return; }
+  const dx = event.clientX - touchStart.x, dy = event.clientY - touchStart.y;
+  if (Math.abs(dx)>48 && Math.abs(dx)>Math.abs(dy)*1.2) moveLookbook(dx<0 ? 1:-1);
+  touchStart=null;
+}, {passive:true});
+
 function render() {
   root.innerHTML = `${header()}${state.page === "catalogo" ? catalog() : home()}${footer()}${floatingSelection()}${modal()}${basket()}`;
   document.body.classList.toggle("overlay-open", Boolean(state.cartOpen || state.productId));
+  updateLookbook();
+  observeReveals();
 }
 function openWhatsApp(message) {
   window.open(waLink(message), "_blank", "noopener,noreferrer");
@@ -299,6 +373,9 @@ root.addEventListener("click", event => {
   const target = event.target.closest("[data-action]");
   if (!target) return;
   const a = target.dataset.action;
+  if (a === "lookbook-next") { moveLookbook(1); return; }
+  if (a === "lookbook-prev") { moveLookbook(-1); return; }
+  if (a === "lookbook-go") { state.lookbookIndex = Number(target.dataset.index); updateLookbook(); return; }
   if (a === "toggle-menu") { state.mobileMenu = !state.mobileMenu; render(); }
   if (a === "close-menu") { state.mobileMenu = false; }
   if (a === "open-cart") { state.cartOpen = true; state.mobileMenu = false; state.productId = null; render(); }
@@ -353,21 +430,44 @@ root.addEventListener("submit", event => {
   openWhatsApp(details.join("\n"));
 });
 
+let hasRouted = false;
 function route() {
   const hash = location.hash;
+  const firstRoute = !hasRouted;
+  hasRouted = true;
   state.page = hash.startsWith("#/catalogo") ? "catalogo" : "home";
   state.cartOpen = false; state.productId = null; state.mobileMenu = false;
   if (hash.startsWith("#/catalogo") && state.pendingCategory) {
     state.category = state.pendingCategory; state.pendingCategory = null;
   }
   render();
-  if (hash.startsWith("#/shopper")) {
-    requestAnimationFrame(() => document.getElementById("personal-shopper")?.scrollIntoView({ behavior: "smooth", block: "start" }));
-  } else window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  const motion = firstRoute || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  requestAnimationFrame(() => {
+    if (hash.startsWith("#/shopper")) {
+      document.getElementById("personal-shopper")?.scrollIntoView({ behavior: motion, block: "start" });
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: motion });
+    }
+  });
 }
 root.addEventListener("click", event => {
   const categoryLink = event.target.closest("a[data-category]");
   if (categoryLink) state.pendingCategory = categoryLink.dataset.category;
+  const navLink = event.target.closest('a[href="#/"], a[href="#/shopper"]');
+  if (!navLink || state.page !== "home") return;
+  const targetHash = navLink.getAttribute("href");
+  if (location.hash === targetHash || (location.hash === "" && targetHash === "#/")) {
+    event.preventDefault();
+    if (state.mobileMenu) { state.mobileMenu = false; render(); }
+    const options = { behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" };
+    if (targetHash === "#/shopper") document.getElementById("personal-shopper")?.scrollIntoView({ ...options, block: "start" });
+    else window.scrollTo({ top: 0, ...options });
+  }
+});
+root.addEventListener("keydown", event => {
+  if (!event.target.closest(".lookbook-viewport")) return;
+  if (event.key === "ArrowLeft") { event.preventDefault(); moveLookbook(-1); }
+  if (event.key === "ArrowRight") { event.preventDefault(); moveLookbook(1); }
 });
 window.addEventListener("hashchange", route);
 window.addEventListener("keydown", event => {
@@ -377,4 +477,5 @@ window.addEventListener("keydown", event => {
     else if (state.mobileMenu) { state.mobileMenu = false; render(); }
   }
 });
+document.documentElement.classList.add("has-scroll-reveal");
 route();

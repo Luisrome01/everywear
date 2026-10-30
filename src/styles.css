@@ -380,3 +380,101 @@ h1, h2, h3, p { margin-top: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Everywear brand image collage and animated editorial journal */
+.brand-story {padding-top:110px;padding-bottom:110px}
+.brand-story-layout{display:grid;grid-template-columns:.82fr 1.18fr;align-items:center;gap:clamp(32px,5vw,90px);padding-top:54px}
+.brand-story-copy{padding-right:10px}
+.brand-story-copy h2{font:400 clamp(41px,4.9vw,71px)/1.15 var(--serif);letter-spacing:-.05em;margin:16px 0 32px}
+.brand-story-copy h2 em{color:var(--wine);font-weight:400}
+.brand-story-copy>p:not(.eyebrow){font-size:15px;line-height:1.9;color:#645e55;max-width:420px;margin-bottom:18px}
+.brand-story-script{display:block;font:normal 47px "Italianno",cursive;color:var(--wine);margin:24px 0 12px}
+.brand-collage{display:grid;grid-template-columns:1.14fr .86fr;grid-template-rows:280px 240px;gap:15px;min-width:0}
+.brand-collage figure{margin:0;position:relative;overflow:hidden;background:#e8dbc2}
+.brand-collage img{width:100%;height:100%;object-fit:cover;transition:transform 850ms cubic-bezier(.22,1,.36,1)}
+.brand-collage figure:hover img{transform:scale(1.045)}
+.brand-collage figcaption{position:absolute;left:16px;bottom:16px;background:rgba(251,247,236,.9);padding:8px 12px;letter-spacing:.15em;font-size:9px;font-weight:600;color:var(--wine)}
+.collage-store{grid-column:1;grid-row:1}
+.collage-store img{object-position:center center}
+.collage-bag{grid-column:1;grid-row:2}
+.collage-bag img{object-position:center 46%}
+.collage-girl{grid-column:2;grid-row:1 / span 2}
+.collage-girl img{object-position:center 23%}
+.lookbook-section{background:#e5d8c3;padding:95px clamp(24px,6vw,95px) 65px;overflow:hidden}
+.lookbook-shell{max-width:1330px;margin:0 auto}
+.lookbook-header{display:flex;align-items:end;justify-content:space-between;gap:24px;margin:39px 0 36px}
+.lookbook-header h2{font:400 clamp(43px,5.1vw,78px)/1.11 var(--serif);letter-spacing:-.06em;margin:7px 0 0}
+.lookbook-header h2 em{font-weight:400;color:var(--wine)}
+.lookbook-header>p{max-width:330px;color:#675d52;font-size:14px;line-height:1.8;margin:0 0 8px}
+.lookbook-body{display:grid;grid-template-columns:.33fr .67fr;gap:15px;min-width:0}
+.lookbook-aside{background:var(--wine);color:#fff2de;min-height:490px;padding:clamp(24px,4vw,55px);display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+.lookbook-aside:before{content:"ew.";font:400 280px "Italianno",cursive;position:absolute;bottom:-90px;right:-80px;color:#ffffff0b;pointer-events:none}
+.lookbook-star{font-size:47px;color:#d9b0aa;position:relative}
+.lookbook-caption{font-size:10px;letter-spacing:.23em;color:#e6bbb4;margin:24px 0}
+.lookbook-aside h3{font:400 clamp(34px,3.8vw,52px)/1.21 var(--serif);letter-spacing:-.05em;position:relative}
+.lookbook-aside h3 em{font-weight:400;color:#efcbbc}
+.lookbook-aside-bottom{margin-top:auto;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #f0d4c060;padding-top:16px;font-size:9px;letter-spacing:.15em;position:relative}
+.lookbook-aside-bottom span{font-size:21px}
+.lookbook-viewer{min-width:0;background:#faf7ef;display:flex;flex-direction:column}
+.lookbook-viewport{overflow:hidden;position:relative;flex:1;min-height:420px;background:#fff;outline-offset:-4px;touch-action:pan-y;cursor:grab}
+.lookbook-viewport:active{cursor:grabbing}
+.lookbook-track{display:flex;width:100%;height:100%;will-change:transform;transition:transform 750ms cubic-bezier(.22,1,.36,1)}
+.lookbook-slide{flex:0 0 100%;min-width:0;display:flex;align-items:center;justify-content:center;padding:clamp(18px,4vw,55px);background:linear-gradient(145deg,#fffefc,#f8f3eb)}
+.lookbook-slide img{display:block;max-width:100%;width:100%;max-height:390px;height:auto;object-fit:contain;box-shadow:0 7px 24px #4e3d2817;user-select:none}
+.lookbook-navigation{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:14px 26px;border-top:1px solid #d8cbb9;min-height:75px}
+.lookbook-counter{display:flex;align-items:center;gap:12px;font:500 12px var(--sans);color:#968a7c;letter-spacing:.1em}
+.lookbook-counter strong{color:var(--wine);font-weight:600}
+.lookbook-counter-rule{height:1px;width:28px;background:#bca992}
+.lookbook-dots{display:flex;align-items:center;justify-content:center;gap:9px}
+.lookbook-dot{width:7px;height:7px;border:0;border-radius:50%;background:#c1ad9e;padding:0;transition:width 400ms,background 400ms,border-radius 400ms}
+.lookbook-dot.active{width:24px;border-radius:10px;background:var(--wine)}
+.lookbook-arrows{display:flex;justify-content:flex-end;gap:9px}
+.lookbook-arrows button{display:grid;place-items:center;width:39px;height:39px;border:1px solid #cdbba9;color:var(--wine);background:transparent;border-radius:50%;transition:background .22s,color .22s,transform .22s}
+.lookbook-arrows button:hover{background:var(--wine);color:white;transform:scale(1.035)}
+.lookbook-bottom{display:flex;justify-content:space-between;gap:12px;margin-top:24px;color:#7f7163;font-size:9px;letter-spacing:.17em}
+.has-scroll-reveal .reveal-on-scroll{opacity:0;transform:translateY(33px);transition:opacity 900ms cubic-bezier(.22,1,.36,1),transform 900ms cubic-bezier(.22,1,.36,1)}
+.has-scroll-reveal .reveal-on-scroll.is-visible{opacity:1;transform:translateY(0)}
+@media(max-width:1100px){
+ .brand-story-layout{grid-template-columns:1fr 1.1fr;gap:32px}
+ .brand-collage{grid-template-rows:250px 200px;gap:11px}
+ .lookbook-body{grid-template-columns:.37fr .63fr}
+ .lookbook-aside{padding:30px}
+}
+@media(max-width:760px){
+ .brand-story{padding-top:65px;padding-bottom:73px}
+ .brand-story-layout{grid-template-columns:1fr;gap:34px;padding-top:29px}
+ .brand-story-copy h2{font-size:clamp(40px,8.5vw,58px)}
+ .brand-story-copy>p:not(.eyebrow){font-size:14px}
+ .brand-collage{grid-template-columns:1fr .86fr;grid-template-rows:235px 195px;gap:10px}
+ .brand-collage figcaption{font-size:8px;left:8px;bottom:8px;padding:6px 8px;letter-spacing:.07em}
+ .lookbook-section{padding:65px 20px 48px}
+ .lookbook-header{align-items:flex-start;flex-direction:column;gap:15px;margin:23px 0 23px}
+ .lookbook-header h2{font-size:clamp(41px,9vw,60px)}
+ .lookbook-header>p{font-size:13px;max-width:480px}
+ .lookbook-body{grid-template-columns:1fr;gap:0}
+ .lookbook-aside{min-height:0;padding:27px;display:block}
+ .lookbook-aside .lookbook-star{font-size:26px}
+ .lookbook-caption{display:inline-block;margin:0 0 0 11px;vertical-align:middle}
+ .lookbook-aside h3{font-size:30px;margin:15px 0 12px}
+ .lookbook-aside h3 br{display:none}
+ .lookbook-aside h3 em{display:block}
+ .lookbook-aside-bottom{display:none}
+ .lookbook-viewport{min-height:0;height:clamp(265px,63vw,440px);flex:none}
+ .lookbook-slide{padding:16px}
+ .lookbook-slide img{max-height:100%;object-fit:contain}
+ .lookbook-navigation{padding:12px 14px;min-height:66px}
+ .lookbook-bottom{font-size:8px;line-height:1.5}
+ .lookbook-bottom span:last-child{max-width:180px;text-align:right}
+}
+@media(max-width:390px){
+ .brand-collage{grid-template-rows:195px 175px}
+ .lookbook-counter{gap:7px;font-size:10px}
+ .lookbook-counter-rule{width:13px}
+ .lookbook-dots{gap:6px}
+ .lookbook-arrows{gap:4px}
+ .lookbook-arrows button{height:34px;width:34px}
+}
+@media(prefers-reduced-motion:reduce){
+ .lookbook-track,.lookbook-dot,.has-scroll-reveal .reveal-on-scroll{transition:none!important;animation:none!important}
+ .has-scroll-reveal .reveal-on-scroll{opacity:1;transform:none}
+}
