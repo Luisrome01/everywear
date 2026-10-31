@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100" fill="none" role="img" aria-label="Marco de tres televisores retro color vino">
+<defs>
+<linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
+ <stop stop-color="#be687f"/><stop offset=".09" stop-color="#762039"/><stop offset=".41" stop-color="#5c112b"/><stop offset=".65" stop-color="#8e3150"/><stop offset=".86" stop-color="#490c24"/><stop offset="1" stop-color="#2c0618"/>
+</linearGradient>
+<linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ee9cb0"/><stop offset=".06" stop-color="#380611"/><stop offset=".2" stop-color="#ac4967"/><stop offset=".45" stop-color="#290715"/><stop offset=".68" stop-color="#9b3956"/><stop offset=".87" stop-color="#2b0615"/><stop offset="1" stop-color="#d97b96"/></linearGradient>
+<linearGradient id="side" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#4b0c20"/><stop offset=".42" stop-color="#781a33"/><stop offset=".76" stop-color="#501028"/><stop offset="1" stop-color="#2f0717"/></linearGradient>
+<linearGradient id="panel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#541024"/><stop offset=".25" stop-color="#a24a64"/><stop offset=".62" stop-color="#4b1027"/><stop offset="1" stop-color="#230414"/></linearGradient>
+<radialGradient id="dial"><stop stop-color="#e4d6d0"/><stop offset=".3" stop-color="#d8c5bd"/><stop offset=".55" stop-color="#7d696a"/><stop offset=".76" stop-color="#e8d0c4"/><stop offset="1" stop-color="#321320"/></radialGradient>
+<linearGradient id="vent" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#250310"/><stop offset=".5" stop-color="#a05263"/><stop offset="1" stop-color="#210211"/></linearGradient>
+<pattern id="grille" width="7" height="9" patternUnits="userSpaceOnUse"><rect width="7" height="9" fill="#210513"/><rect x="1" y="1" width="1.6" height="7" fill="#ae6d7d"/><rect x="4.2" y="1" width="1.2" height="7" fill="#491325"/></pattern>
+<filter id="bigShadow" x="-25%" y="-25%" width="160%" height="170%"><feDropShadow dx="8" dy="14" stdDeviation="16" flood-color="#3b1520" flood-opacity=".31"/></filter>
+<filter id="insideShadow" x="-10%" y="-10%" width="125%" height="130%"><feDropShadow dx="2" dy="3" stdDeviation="2" flood-color="#230410" flood-opacity=".6"/></filter>
+<mask id="m-top" maskUnits="userSpaceOnUse"><rect x="138" y="23" width="590" height="359" rx="22" fill="white"/><rect x="173" y="66" width="428" height="266" rx="38" fill="black"/></mask>
+<mask id="m-mid" maskUnits="userSpaceOnUse"><rect x="72" y="389" width="646" height="364" rx="20" fill="white"/><rect x="106" y="434" width="458" height="270" rx="36" fill="black"/></mask>
+<mask id="m-low" maskUnits="userSpaceOnUse"><rect x="55" y="750" width="653" height="326" rx="20" fill="white"/><rect x="89" y="795" width="453" height="238" rx="37" fill="black"/></mask>
+</defs>
+<!-- Top body: real CRT depth and burgundy beveled face -->
+<g filter="url(#bigShadow)">
+ <path d="M19 126 139 25 139 383 18 396Z" fill="url(#side)" stroke="#390719" stroke-width="6"/>
+ <path d="M20 128 139 28" stroke="#e48fa5" stroke-opacity=".47" stroke-width="3"/>
+ <path d="M19 391 141 386 730 382 741 397 143 406 19 401Z" fill="#380814"/>
+ <rect x="138" y="23" width="590" height="359" rx="22" fill="url(#body)" mask="url(#m-top)" stroke="#310715" stroke-width="8"/>
+ <rect x="150" y="33" width="565" height="337" rx="18" stroke="url(#rim)" stroke-width="5"/>
+ <rect x="165" y="57" width="445" height="282" rx="47" stroke="#1f0411" stroke-width="15" opacity=".97"/>
+ <rect x="173" y="66" width="428" height="266" rx="38" stroke="url(#rim)" stroke-width="7"/>
+ <path d="M165 55H596" stroke="#f8b9c5" stroke-opacity=".48" stroke-width="2.2"/>
+ <path d="M165 344H612" stroke="#28030f" stroke-width="4"/>
+ <rect x="625" y="50" width="77" height="315" rx="9" fill="url(#panel)" stroke="#8a314b" stroke-width="2"/>
+ <rect x="642" y="64" width="46" height="115" rx="4" fill="url(#grille)" stroke="#2c0817" stroke-width="4"/>
+ <path d="M645 192H686" stroke="#f3b7ae" stroke-opacity=".45"/>
+ <circle cx="663" cy="221" r="23" fill="url(#dial)" stroke="#180611" stroke-width="5"/>
+ <circle cx="663" cy="221" r="12" stroke="#f4e6d0" stroke-width="2.5" opacity=".77"/>
+ <circle cx="663" cy="277" r="17" fill="url(#dial)" stroke="#210612" stroke-width="4"/>
+ <rect x="641" y="304" width="43" height="42" rx="2" fill="url(#grille)" opacity=".88"/>
+</g>
+<!-- Middle TV offset and facing the viewer -->
+<g filter="url(#bigShadow)">
+ <path d="M72 411 145 369 725 387 770 415 771 745 709 756 73 752Z" fill="url(#side)" stroke="#3d071e" stroke-width="7"/>
+ <rect x="72" y="389" width="646" height="364" rx="20" fill="url(#body)" mask="url(#m-mid)" stroke="#3b061a" stroke-width="9"/>
+ <rect x="83" y="402" width="623" height="339" rx="18" stroke="url(#rim)" stroke-width="6"/>
+ <rect x="98" y="427" width="472" height="285" rx="48" stroke="#2b0414" stroke-width="16"/>
+ <rect x="106" y="434" width="458" height="270" rx="36" stroke="url(#rim)" stroke-width="7"/>
+ <path d="M99 423 565 423" stroke="#f8b7c9" stroke-width="2.5" opacity=".58"/>
+ <path d="M100 719H575" stroke="#2d0616" stroke-width="4"/>
+ <rect x="590" y="413" width="99" height="313" rx="7" fill="url(#panel)" stroke="#88304a" stroke-width="2"/>
+ <rect x="611" y="429" width="59" height="104" rx="4" fill="url(#grille)" stroke="#320718" stroke-width="5"/>
+ <circle cx="642" cy="566" r="24" fill="url(#dial)" stroke="#1b0511" stroke-width="5"/>
+ <circle cx="642" cy="566" r="12" stroke="#faf1df" stroke-width="2.4" opacity=".8"/>
+ <circle cx="642" cy="622" r="16" fill="url(#dial)" stroke="#280714" stroke-width="4"/>
+ <rect x="611" y="652" width="57" height="61" rx="2" fill="url(#grille)"/>
+ <path d="M85 753H688L663 767H107Z" fill="#390916"/>
+</g>
+<!-- Lowest CRT -->
+<g filter="url(#bigShadow)">
+ <path d="M56 768 138 744 694 759 768 793 761 1041 706 1070 55 1078Z" fill="url(#side)" stroke="#400918" stroke-width="7"/>
+ <rect x="55" y="750" width="653" height="326" rx="20" fill="url(#body)" mask="url(#m-low)" stroke="#370517" stroke-width="9"/>
+ <rect x="66" y="765" width="631" height="297" rx="18" stroke="url(#rim)" stroke-width="6"/>
+ <rect x="82" y="788" width="464" height="251" rx="48" stroke="#210512" stroke-width="16"/>
+ <rect x="89" y="795" width="453" height="238" rx="37" stroke="url(#rim)" stroke-width="7"/>
+ <path d="M81 786H550" stroke="#f8b9c8" stroke-width="2.5" opacity=".62"/>
+ <rect x="565" y="780" width="111" height="272" rx="8" fill="url(#panel)" stroke="#8b304a" stroke-width="3"/>
+ <rect x="593" y="792" width="60" height="91" rx="4" fill="url(#grille)" stroke="#300513" stroke-width="5"/>
+ <circle cx="621" cy="921" r="24" fill="url(#dial)" stroke="#230411" stroke-width="5"/>
+ <circle cx="621" cy="921" r="12" stroke="#f1e6dc" stroke-width="2" opacity=".75"/>
+ <circle cx="621" cy="977" r="17" fill="url(#dial)" stroke="#2b0917" stroke-width="4"/>
+ <rect x="593" y="1010" width="60" height="26" rx="2" fill="url(#grille)"/>
+ <path d="M84 1076H683L667 1090H108Z" fill="#350719"/>
+</g>
+</svg>

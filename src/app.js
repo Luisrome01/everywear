@@ -1,5 +1,6 @@
 import { PRODUCTS, CATEGORIES, MEDIA, money } from "./data.js";
 import { BRAND_MEDIA, LOOKBOOK_SLIDES } from "./brand-media.js";
+import { TV_PHOTOS } from "./tv-photos.js";
 import "./styles.css";
 
 const root = document.getElementById("app");
@@ -108,49 +109,36 @@ function productCard(p, index = 0) {
 }
 
 
-function tvUnit(position, photos) {
-  return `<div class="retro-tv retro-tv-${position}" aria-label="Televisor editorial ${position}">
-    <div class="tv-case">
-      <div class="tv-bezel">
-        <div class="tv-screen">
-          ${photos.map((photo,i)=>`<img class="tv-picture tv-picture-${i}" src="${photo}" alt="" loading="lazy" draggable="false" />`).join("")}
-          <div class="tv-glass" aria-hidden="true"></div>
-        </div>
-      </div>
-      <div class="tv-side" aria-hidden="true">
-        <div class="tv-vents"></div>
-        <div class="tv-dial"></div>
-        <div class="tv-dial tv-dial-small"></div>
-        <div class="tv-brand">EW.</div>
-      </div>
-    </div>
-    <div class="tv-stand" aria-hidden="true"></div>
-  </div>`;
+function tvScreen(position, index) {
+  const photo = TV_PHOTOS[index % TV_PHOTOS.length];
+  return `<button type="button" class="tv-live-screen tv-live-screen--${position}" data-tv-screen="${index}" data-action="tv-change" aria-label="Cambiar la prenda del televisor ${position}">
+    <img class="tv-live-current" src="${htmlSafe(photo.src)}" alt="${htmlSafe(photo.alt)}" draggable="false" />
+    <img class="tv-live-next" alt="" aria-hidden="true" draggable="false" />
+    <span class="tv-screen-gloss" aria-hidden="true"></span>
+  </button>`;
 }
 
 function editorialTV() {
-  const sets = [
-    [PRODUCTS[3].image, PRODUCTS[0].image, PRODUCTS[6].image],
-    [PRODUCTS[4].image, PRODUCTS[1].image, PRODUCTS[5].image],
-    [PRODUCTS[0].images[1], PRODUCTS[3].images[1], PRODUCTS[2].image]
-  ];
   return `<section class="tv-editorial-section reveal-on-scroll" aria-labelledby="tv-editorial-title">
     <div class="tv-editorial-content">
       <div class="tv-editorial-copy">
         <div class="tv-eyebrow"><span>NEW PIECES, NEW OBSESSIONS</span><span class="tv-asterisk">*</span></div>
         <h2 id="tv-editorial-title">Now showing:<br/><em>everywear.</em></h2>
-        <p>Prendas que inspiran, nuevas combinaciones y un universo de estilo que siempre está cambiando. Descubre más de Everywear en Instagram.</p>
+        <p>Tres pantallas, infinitas combinaciones. Descubre prendas que inspiran tu estilo y sigue nuestras novedades en Instagram.</p>
         <a class="tv-social-link" href="${instagram}" target="_blank" rel="noopener noreferrer">${icon("insta",18)} Seguir @everywear.ve ${icon("arrowup",17)}</a>
         <div class="tv-editorial-note">THE STYLE CHANNEL / EDICIÓN 01</div>
       </div>
-      <div class="tv-scene" aria-label="Tres televisores retro color vino mostrando imágenes de moda que cambian automáticamente">
-        <div class="tv-halo"></div>
-        ${tvUnit("top",sets[0])}
-        ${tvUnit("middle",sets[1])}
-        ${tvUnit("bottom",sets[2])}
+      <div class="tv-scene">
+        <div class="tv-stage" role="group" aria-label="Tres televisores retro color vino con prendas que cambian aleatoriamente">
+          ${tvScreen("top", 0)}
+          ${tvScreen("middle", 1)}
+          ${tvScreen("bottom", 2)}
+          <img class="tv-photoreal-frame" src="/brand/tv-stack.svg" alt="" aria-hidden="true" draggable="false" />
+        </div>
+        <p class="tv-hint">Cada pantalla cambia de forma independiente · Toca una pantalla para cambiar la prenda</p>
       </div>
     </div>
-    <p class="tv-editorial-disclaimer">Visual editorial inspirado en Everywear. Prendas ilustrativas del catálogo de demostración.</p>
+    <p class="tv-editorial-disclaimer">Imágenes de demostración hasta incorporar las fotografías definitivas de Everywear.</p>
   </section>`;
 }
 
@@ -380,11 +368,91 @@ root.addEventListener("pointerup", event => {
   touchStart=null;
 }, {passive:true});
 
+
+let tvRotation = null;
+function initTVRotation() {
+  tvRotation?.stop();
+  const scene = document.querySelector(".tv-stage");
+  if (!scene || !TV_PHOTOS.length) { tvRotation = null; return; }
+  const screens = Array.from(scene.querySelectorAll("[data-tv-screen]"));
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const chosen = screens.map((_, i) => i % TV_PHOTOS.length);
+  const pending = new Set();
+  const timers = new Array(screens.length).fill(null);
+  let visible = false;
+  let alive = true;
+  const randomDelay = i => 2600 + i * 450 + Math.floor(Math.random() * 2300);
+  const chooseNext = i => {
+    const blocked = new Set([...chosen, ...pending]);
+    let candidates = TV_PHOTOS.map((_, j) => j).filter(j => !blocked.has(j));
+    if (!candidates.length) candidates = TV_PHOTOS.map((_, j) => j).filter(j => j !== chosen[i]);
+    return candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : chosen[i];
+  };
+  const change = async i => {
+    const screen = screens[i];
+    if (!alive || !screen || screen.dataset.loading === "true" || TV_PHOTOS.length < 2) return;
+    const nextIdx = chooseNext(i);
+    const next = screen.querySelector(".tv-live-next");
+    const current = screen.querySelector(".tv-live-current");
+    if (nextIdx === chosen[i] || !next || !current) return;
+    screen.dataset.loading = "true";
+    pending.add(nextIdx);
+    const src = TV_PHOTOS[nextIdx].src;
+    next.src = src;
+    try {
+      if (next.decode) await next.decode();
+      if (!alive || !scene.isConnected) return;
+      next.classList.add("is-visible");
+      await new Promise(resolve => setTimeout(resolve, reduced ? 0 : 800));
+      if (!alive || !scene.isConnected) return;
+      current.src = src;
+      current.alt = TV_PHOTOS[nextIdx].alt || "Foto de prenda Everywear";
+      chosen[i] = nextIdx;
+      next.classList.remove("is-visible");
+    } catch {
+      // Una foto no disponible no interrumpe las demás pantallas.
+    } finally {
+      pending.delete(nextIdx);
+      screen.dataset.loading = "false";
+    }
+  };
+  const schedule = i => {
+    clearTimeout(timers[i]);
+    if (!alive || !visible || document.hidden || reduced) return;
+    timers[i] = setTimeout(async () => {
+      await change(i);
+      schedule(i);
+    }, randomDelay(i));
+  };
+  const pause = () => timers.forEach(timer => clearTimeout(timer));
+  const resume = () => {
+    pause();
+    if (visible && !document.hidden) screens.forEach((_,i) => schedule(i));
+  };
+  const onVisibility = () => { document.hidden ? pause() : resume(); };
+  document.addEventListener("visibilitychange", onVisibility);
+  const observer = new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    visible ? resume() : pause();
+  }, { threshold: .1 });
+  observer.observe(scene);
+  tvRotation = {
+    change,
+    stop: () => {
+      alive = false;
+      pause();
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+    }
+  };
+}
+
 function render() {
   root.innerHTML = `${header()}${state.page === "catalogo" ? catalog() : home()}${footer()}${floatingSelection()}${modal()}${basket()}`;
   document.body.classList.toggle("overlay-open", Boolean(state.cartOpen || state.productId));
   updateLookbook();
   observeReveals();
+  initTVRotation();
 }
 function openWhatsApp(message) {
   window.open(waLink(message), "_blank", "noopener,noreferrer");
@@ -421,6 +489,7 @@ root.addEventListener("click", event => {
   const target = event.target.closest("[data-action]");
   if (!target) return;
   const a = target.dataset.action;
+  if (a === "tv-change") { tvRotation?.change(Number(target.dataset.tvScreen)); return; }
   if (a === "lookbook-next") { moveLookbook(1); return; }
   if (a === "lookbook-prev") { moveLookbook(-1); return; }
   if (a === "lookbook-go") { state.lookbookIndex = Number(target.dataset.index); updateLookbook(); return; }
