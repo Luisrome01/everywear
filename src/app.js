@@ -5,7 +5,7 @@ import "./styles.css";
 const root = document.getElementById("app");
 const PHONE = String(import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
 const CART_KEY = "everywear_selection_v1";
-const instagram = "https://www.instagram.com/everywear.ve/";
+const instagram = "https://www.instagram.com/everywear.ve?srtk=MTJycHJxNXl2eXZyOQ==";
 
 const getSavedCart = () => {
   try {
@@ -53,7 +53,7 @@ const productOf = id => PRODUCTS.find(p => p.id === id);
 
 function header() {
   return `
-    <div class="announce"><span>YOUR ACCESS TO EUROPEAN FASHION</span><span class="announce-star">✳</span><span>CURATED WITH LOVE</span></div>
+    <div class="announce"><span>YOUR ACCESS TO EUROPEAN FASHION</span><span class="announce-star">*</span><span>CURATED WITH LOVE</span></div>
     <header class="header">
       <div class="header-wrap">
         <a class="header-logo" href="#/" aria-label="Everywear, inicio">${logo()}</a>
@@ -107,6 +107,53 @@ function productCard(p, index = 0) {
   </article>`;
 }
 
+
+function tvUnit(position, photos) {
+  return `<div class="retro-tv retro-tv-${position}" aria-label="Televisor editorial ${position}">
+    <div class="tv-case">
+      <div class="tv-bezel">
+        <div class="tv-screen">
+          ${photos.map((photo,i)=>`<img class="tv-picture tv-picture-${i}" src="${photo}" alt="" loading="lazy" draggable="false" />`).join("")}
+          <div class="tv-glass" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="tv-side" aria-hidden="true">
+        <div class="tv-vents"></div>
+        <div class="tv-dial"></div>
+        <div class="tv-dial tv-dial-small"></div>
+        <div class="tv-brand">EW.</div>
+      </div>
+    </div>
+    <div class="tv-stand" aria-hidden="true"></div>
+  </div>`;
+}
+
+function editorialTV() {
+  const sets = [
+    [PRODUCTS[3].image, PRODUCTS[0].image, PRODUCTS[6].image],
+    [PRODUCTS[4].image, PRODUCTS[1].image, PRODUCTS[5].image],
+    [PRODUCTS[0].images[1], PRODUCTS[3].images[1], PRODUCTS[2].image]
+  ];
+  return `<section class="tv-editorial-section reveal-on-scroll" aria-labelledby="tv-editorial-title">
+    <div class="tv-editorial-content">
+      <div class="tv-editorial-copy">
+        <div class="tv-eyebrow"><span>NEW PIECES, NEW OBSESSIONS</span><span class="tv-asterisk">*</span></div>
+        <h2 id="tv-editorial-title">Now showing:<br/><em>everywear.</em></h2>
+        <p>Prendas que inspiran, nuevas combinaciones y un universo de estilo que siempre está cambiando. Descubre más de Everywear en Instagram.</p>
+        <a class="tv-social-link" href="${instagram}" target="_blank" rel="noopener noreferrer">${icon("insta",18)} Seguir @everywear.ve ${icon("arrowup",17)}</a>
+        <div class="tv-editorial-note">THE STYLE CHANNEL / EDICIÓN 01</div>
+      </div>
+      <div class="tv-scene" aria-label="Tres televisores retro color vino mostrando imágenes de moda que cambian automáticamente">
+        <div class="tv-halo"></div>
+        ${tvUnit("top",sets[0])}
+        ${tvUnit("middle",sets[1])}
+        ${tvUnit("bottom",sets[2])}
+      </div>
+    </div>
+    <p class="tv-editorial-disclaimer">Visual editorial inspirado en Everywear. Prendas ilustrativas del catálogo de demostración.</p>
+  </section>`;
+}
+
 function home() {
   return `
     <main>
@@ -120,12 +167,12 @@ function home() {
         </div>
         <div class="hero-photo">
           <img src="${MEDIA.hero}" alt="Editorial de moda femenina, inspiración Everywear" fetchpriority="high" />
-          <div class="hero-photo-chip"><span class="chip-star">✳</span><span>CURATED<br/>EUROPEAN STYLE</span></div>
+          <div class="hero-photo-chip"><span class="chip-star">*</span><span>CURATED<br/>EUROPEAN STYLE</span></div>
           <div class="hero-photo-caption">THE NEW EVERYDAY / 2026</div>
         </div>
         <div class="hero-vertical">EVERYWEAR — EVERY OCCASION</div>
       </section>
-      <div class="marquee" aria-label="Everywear, estilo para cada día"><div class="marquee-inner">${Array(3).fill(`<span>EVERY DAY</span><span class="marquee-flower">✳</span><span>EVERY STYLE</span><span class="marquee-flower">✳</span><span>EVERY WEAR</span><span class="marquee-flower">✳</span>`).join("")}</div></div>
+      <div class="marquee" aria-label="Everywear, estilo para cada día"><div class="marquee-inner">${Array(3).fill(`<span>EVERY DAY</span><span class="marquee-flower">*</span><span>EVERY STYLE</span><span class="marquee-flower">*</span><span>EVERY WEAR</span><span class="marquee-flower">*</span>`).join("")}</div></div>
       <section class="brand-story section reveal-on-scroll" id="about-us" aria-labelledby="brand-story-title">
         <div class="section-topline"><span>01 / LA MARCA</span><span>EVERYWEAR — OUR WORLD</span></div>
         <div class="brand-story-layout">
@@ -151,7 +198,7 @@ function home() {
             <p>Un vistazo a nuestro universo: pequeños detalles, inspiración y nuevas formas de vestir.</p>
           </div>
           <div class="lookbook-body">
-            <div class="lookbook-aside"><span class="lookbook-star">✳</span><p class="lookbook-caption">THE EVERYWEAR JOURNAL</p><h3>Un libro.<br/><em>Muchas formas<br/>de ser tú.</em></h3><div class="lookbook-aside-bottom">OUR STORY IN FRAMES <span>↗</span></div></div>
+            <div class="lookbook-aside"><span class="lookbook-star">*</span><p class="lookbook-caption">THE EVERYWEAR JOURNAL</p><h3>Un libro.<br/><em>Muchas formas<br/>de ser tú.</em></h3><div class="lookbook-aside-bottom">OUR STORY IN FRAMES <span>↗</span></div></div>
             <div class="lookbook-viewer">
               <div class="lookbook-viewport" role="region" aria-roledescription="carrusel" aria-label="Lookbook fotográfico Everywear" tabindex="0">
                 <div class="lookbook-track" id="lookbook-track" style="transform:translate3d(-${state.lookbookIndex * 100}%,0,0)">
@@ -168,10 +215,11 @@ function home() {
           <div class="lookbook-bottom"><span>VISUAL JOURNAL / EVERYWEAR</span><span>DESLIZA O USA LAS FLECHAS PARA EXPLORAR</span></div>
         </div>
       </section>
+      ${editorialTV()}
       <section class="personal-shopper section" id="personal-shopper">
         <div class="shopper-intro">
           <p class="eyebrow">03 / JUST FOR YOU</p>
-          <div class="shopper-star">✳</div>
+          <div class="shopper-star">*</div>
           <h2>Tu estilo,<br/><em>nuestro punto de partida.</em></h2>
           <p>¿Buscas algo especial? Cuéntanos qué tienes en mente y te ayudamos a encontrar las piezas que van contigo.</p>
           <span class="shopper-sign">PERSONAL SHOPPER BY EVERYWEAR</span>
@@ -211,7 +259,7 @@ function filteredProducts() {
 
 function catalogGrid() {
   const items = filteredProducts();
-  return items.length ? items.map(productCard).join("") : `<div class="empty-products"><span>✳</span><h3>No encontramos coincidencias.</h3><p>Prueba con otra búsqueda o explora todas las categorías.</p><button data-action="reset-filters" class="text-link">Ver todos los productos ${icon("arrow",17)}</button></div>`;
+  return items.length ? items.map(productCard).join("") : `<div class="empty-products"><span>*</span><h3>No encontramos coincidencias.</h3><p>Prueba con otra búsqueda o explora todas las categorías.</p><button data-action="reset-filters" class="text-link">Ver todos los productos ${icon("arrow",17)}</button></div>`;
 }
 
 function catalog() {
@@ -221,7 +269,7 @@ function catalog() {
       <p class="eyebrow">THE EVERYWEAR EDIT / EDICIÓN 01</p>
       <h1>Tu próximo <em>favorito.</em></h1>
       <p>Piezas especiales para todos los días. Explora, elige y arma una selección tan única como tú.</p>
-      <div class="catalog-corner">CURATED WITH INTENTION ✳</div>
+      <div class="catalog-corner">CURATED WITH INTENTION *</div>
     </section>
     <section class="section catalog-content">
       <div class="catalog-toolbar"><div><span class="eyebrow">EXPLORE THE EDIT</span><h2>La colección <span id="result-count">(${filteredProducts().length})</span></h2></div>
@@ -230,7 +278,7 @@ function catalog() {
       <div class="filter-scroll"><div class="filter-chips" role="group" aria-label="Filtrar por categoría">${CATEGORIES.map(c => `<button data-action="category" data-category="${c}" class="filter-chip ${state.category === c ? "selected" : ""}" aria-pressed="${state.category === c}">${c}</button>`).join("")}</div></div>
       <div class="catalog-notice">CATÁLOGO DE DEMOSTRACIÓN · Los artículos, las imágenes y los precios se reemplazarán por los productos reales.</div>
       <div id="catalog-grid" class="products-grid catalog-grid">${catalogGrid()}</div>
-      <div class="catalog-end"><span>✳</span><p>You've seen the whole edit.</p><h3>¿No encontraste lo que buscas?</h3><a href="#/shopper" class="text-link">Pregúntale a nuestro personal shopper ${icon("arrowup",17)}</a></div>
+      <div class="catalog-end"><span>*</span><p>You've seen the whole edit.</p><h3>¿No encontraste lo que buscas?</h3><a href="#/shopper" class="text-link">Pregúntale a nuestro personal shopper ${icon("arrowup",17)}</a></div>
     </section>
   </main>`;
 }
@@ -241,9 +289,9 @@ function footer() {
       <div class="footer-about"><a href="#/" class="footer-logo">${logo()}</a><p>Tu acceso a la moda europea. Seleccionamos piezas para que las hagas completamente tuyas.</p><a class="footer-social" href="${instagram}" target="_blank" rel="noopener noreferrer">${icon("insta",19)} @everywear.ve</a></div>
       <div class="footer-links"><span>EXPLORA</span><a href="#/">Inicio</a><a href="#/catalogo">Catálogo</a><a href="#/shopper">Personal shopper</a></div>
       <div class="footer-links"><span>HABLEMOS</span><a href="${instagram}" target="_blank" rel="noopener noreferrer">Instagram ${icon("arrowup",14)}</a><a href="${waLink("Hola Everywear, me gustaría recibir información sobre sus productos.")}" target="_blank" rel="noopener noreferrer">WhatsApp ${icon("arrowup",14)}</a><button data-action="open-cart">Tu selección</button></div>
-      <div class="footer-note"><span>EVERY DAY, EVERY WEAR.</span><div class="footer-flower">✳</div><p>Curated for you.<br/>Worn your way.</p></div>
+      <div class="footer-note"><span>EVERY DAY, EVERY WEAR.</span><div class="footer-flower">*</div><p>Curated for you.<br/>Worn your way.</p></div>
     </div>
-    <div class="footer-bottom"><span>© ${new Date().getFullYear()} EVERYWEAR. ALL RIGHTS RESERVED.</span><span>MADE TO BE YOURS ✳</span><span>YOUR ACCESS TO EUROPEAN FASHION</span></div>
+    <div class="footer-bottom"><span>© ${new Date().getFullYear()} EVERYWEAR. ALL RIGHTS RESERVED.</span><span>MADE TO BE YOURS *</span><span>YOUR ACCESS TO EUROPEAN FASHION</span></div>
     <div class="footer-large-word">everywear.</div>
   </footer>`;
 }

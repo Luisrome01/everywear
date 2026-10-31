@@ -478,3 +478,132 @@ h1, h2, h3, p { margin-top: 0; }
  .lookbook-track,.lookbook-dot,.has-scroll-reveal .reveal-on-scroll{transition:none!important;animation:none!important}
  .has-scroll-reveal .reveal-on-scroll{opacity:1;transform:none}
 }
+
+
+/* Mobile-safe text-only asterisk: no Unicode emoji or platform rendering. */
+.announce-star,.chip-star,.marquee-flower,.lookbook-star,.shopper-star,
+.footer-flower,.catalog-end > span,.empty-products > span {
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-style: normal;
+  font-variant-emoji: text;
+  line-height: .8;
+}
+.marquee-flower {font-size:27px; transform:translateY(3px)}
+.announce-star {font-size:18px}
+.chip-star {font-size:28px}
+.lookbook-star,.shopper-star {font-size:56px}
+
+/* Source was a screenshot (approx. 510px editorial spread).
+   Do not stretch the raster past its real detail limit. */
+.lookbook-viewport { background:#f0e8dc; }
+.lookbook-slide { background:linear-gradient(135deg,#fcfaf3,#ede3d6); padding:24px; }
+.lookbook-slide img {
+  width:auto;
+  max-width:min(100%,520px);
+  max-height:min(36vw,385px);
+  height:auto;
+  object-fit:contain;
+  box-shadow:0 14px 32px rgba(77,58,42,.10);
+  filter:contrast(1.055) saturate(1.06);
+}
+.lookbook-slide img, .brand-collage img {image-rendering:auto}
+
+/* Everywear's retro editorial TV wall. All parts drawn in CSS. */
+.tv-editorial-section{
+  position:relative; overflow:hidden;
+  background:linear-gradient(115deg,#f4e7df 0%,#edd2d2 57%,#e8bfc3 100%);
+  padding:90px clamp(22px,7vw,112px) 55px;
+  isolation:isolate;
+}
+.tv-editorial-content{
+  margin:0 auto;
+  max-width:1390px;
+  display:grid;
+  grid-template-columns: minmax(280px,.78fr) minmax(430px,1.22fr);
+  align-items:center;
+  gap:clamp(25px,5vw,90px);
+}
+.tv-editorial-copy{position:relative;z-index:2;max-width:475px}
+.tv-eyebrow{display:flex;align-items:center;gap:16px;color:#7b3444;font-size:10px;font-weight:600;letter-spacing:.22em}
+.tv-asterisk{font:normal 29px Georgia,serif;color:var(--wine);line-height:1}
+.tv-editorial-copy h2{font:400 clamp(49px,5.5vw,84px)/1.1 var(--serif);letter-spacing:-.055em;margin:24px 0 24px}
+.tv-editorial-copy h2 em{color:var(--wine);font-weight:400}
+.tv-editorial-copy>p{font-size:15px;line-height:1.85;color:#6d5251;max-width:405px;margin-bottom:30px}
+.tv-social-link{display:inline-flex;align-items:center;gap:14px;background:var(--wine);color:#fff7ea;padding:17px 22px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;transition:transform .25s,background .25s}
+.tv-social-link:hover{transform:translateY(-3px);background:#601d30}
+.tv-editorial-note{border-top:1px solid #954e5761;margin-top:65px;padding-top:16px;font-size:9px;letter-spacing:.22em;color:#854953}
+.tv-scene{
+  position:relative;min-width:0;height:740px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  perspective:1000px;
+}
+.tv-halo{position:absolute;width:85%;height:78%;top:8%;left:8%;border-radius:50%;background:radial-gradient(ellipse,#f6ece670 0%,#e7b2bb5a 50%,transparent 72%);filter:blur(18px);pointer-events:none}
+.retro-tv{width:min(92%,495px);position:relative;filter:drop-shadow(14px 16px 13px #6b28352e);transition:transform .5s ease}
+.retro-tv-top{width:min(84%,440px);z-index:3;transform:translateX(-2%) rotate(-1.3deg)}
+.retro-tv-middle{width:min(96%,515px);z-index:2;margin-top:-11px;transform:translateX(4%) rotate(.6deg)}
+.retro-tv-bottom{width:min(92%,490px);z-index:1;margin-top:-8px;transform:translateX(-2%) rotate(-.5deg)}
+.tv-case{
+  aspect-ratio: 2.1/1; display:grid;grid-template-columns:minmax(0,1fr) 18%;
+  gap:0;padding:12px 8px 12px 15px;
+  border-radius:23px 28px 22px 24px;
+  background:linear-gradient(150deg,#a44c60 0%,#791b34 19%,#5a1428 52%,#8c2c43 78%,#461221 100%);
+  border:4px solid #61182b;
+  box-shadow: inset 3px 5px 5px #d88da558,inset -5px -6px 7px #2d0416b8,
+    0 3px 0 #4a0b1e,0 8px 10px #6b293651;
+}
+.tv-bezel{padding:6px;background:linear-gradient(140deg,#410d1d,#9c425a 40%,#3b0b1b 80%);border-radius:47% / 18%;box-shadow:inset 3px 4px 5px #260611}
+.tv-screen{position:relative;height:100%;overflow:hidden;border-radius:40% / 16%;background:#160c0d;border:3px solid #1e0d15;box-shadow:inset 0 0 9px #070406b0}
+.tv-picture{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 38%;opacity:0;animation:tv-cycle 12s linear infinite;filter:saturate(.87) contrast(1.02)}
+.tv-picture-0{animation-delay:0s}
+.tv-picture-1{animation-delay:-4s}
+.tv-picture-2{animation-delay:-8s}
+.tv-glass{position:absolute;inset:0;pointer-events:none;border-radius:inherit;z-index:2;background:linear-gradient(135deg,#fff9f014,transparent 31%,#2c05171c 80%);box-shadow:inset 0 0 18px #1d0c1366}
+@keyframes tv-cycle{
+  0%,26%{opacity:1;transform:scale(1)}
+  33%,94%{opacity:0;transform:scale(1.055)}
+  100%{opacity:1;transform:scale(1)}
+}
+.tv-side{display:flex;align-items:center;flex-direction:column;gap:13px;padding:12px 2px 5px;min-width:0}
+.tv-vents{width:65%;height:33%;background:repeating-linear-gradient(90deg,#260914 0 2px,#ac6476 3px 4px,#3c0b1d 5px 7px);border:2px solid #4a1224;box-shadow:inset 2px 3px 5px #18061180;border-radius:3px}
+.tv-dial{width:33%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 40% 35%,#efe3d3 0 24%,#b5a3a0 36%,#554144 55%,#b08c92 70%,#341322 82%);border:2px solid #582838;box-shadow:2px 3px 3px #2105128a}
+.tv-dial-small{width:25%;margin-top:-5px}
+.tv-brand{margin-top:auto;font:italic 11px Georgia,serif;color:#e7b9ac;letter-spacing:.1em}
+.tv-stand{width:70%;height:8px;background:linear-gradient(#4c0e20,#240611);margin:auto;border-radius:0 0 45% 45%;box-shadow:0 4px 7px #4f162850}
+.tv-editorial-disclaimer{text-align:right;max-width:1390px;margin:12px auto 0;color:#916d73;font-size:10px;letter-spacing:.02em}
+@media(max-width:980px){
+ .tv-editorial-content{grid-template-columns:1fr 1.3fr;gap:14px}
+ .tv-editorial-copy h2{font-size:clamp(42px,5.6vw,66px)}
+ .tv-scene{height:630px}
+ .tv-case{padding:10px 6px 10px 11px}
+ .tv-side{gap:9px}
+}
+@media(max-width:760px){
+ .tv-editorial-section{padding:63px 20px 30px}
+ .tv-editorial-content{grid-template-columns:1fr;gap:13px}
+ .tv-editorial-copy{max-width:530px}
+ .tv-editorial-copy h2{font-size:clamp(47px,10vw,72px)}
+ .tv-editorial-copy>p{font-size:14px;margin-bottom:20px}
+ .tv-editorial-note{margin-top:32px}
+ .tv-scene{height:clamp(430px,115vw,620px)}
+ .retro-tv-top{width:min(79%,420px)}
+ .retro-tv-middle{width:min(91%,470px)}
+ .retro-tv-bottom{width:min(85%,445px)}
+ .tv-case{border-radius:17px;padding:8px 5px 8px 10px;border-width:3px}
+ .tv-bezel{padding:4px}
+ .tv-screen{border-width:2px}
+ .tv-side{padding:7px 2px 4px;gap:8px}
+ .tv-editorial-disclaimer{text-align:left;font-size:9px}
+ .lookbook-slide{padding:13px}
+ .lookbook-slide img{max-width:min(100%,510px);max-height:100%;filter:contrast(1.06) saturate(1.05)}
+}
+@media(max-width:390px){
+ .tv-scene{height:425px}
+ .tv-side{gap:5px;padding-top:5px}
+ .tv-vents{height:26%}
+ .tv-brand{font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){
+ .tv-picture{animation:none;opacity:0}
+ .tv-picture-0{opacity:1}
+ .retro-tv,.tv-social-link{transition:none}
+}
