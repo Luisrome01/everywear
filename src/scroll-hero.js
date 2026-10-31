@@ -1,7 +1,9 @@
 // Everywear experimental scroll hero (video-scroll-test only).
 // This module owns no autoplay video; progress maps to one of 60 still frames.
 export const SCROLL_FRAMES = 60;
-const path = i => `/scroll-frames/frame_${String(i + 1).padStart(3, "0")}.webp`;
+// Add ?scrollQuality=720 to compare against the untouched source frames.
+const quality = new URLSearchParams(window.location.search).get("scrollQuality") === "720" ? "scroll-frames" : "scroll-frames-hd";
+const path = i => `/${quality}/frame_${String(i + 1).padStart(3, "0")}.webp`;
 
 export function scrollHeroMarkup() {
   return `<section class="ew-scroll-zone" id="everywear-scroll-experience" aria-label="Editorial Everywear, camina con nuestro estilo">
