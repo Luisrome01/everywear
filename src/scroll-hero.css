@@ -1,0 +1,45 @@
+/* Scoped experimental scroll scene, only video-scroll-test. */
+.ew-scroll-zone{height:480svh;min-height:2200px;position:relative;isolation:isolate;background:#f8efdf;max-width:100%;}
+.ew-scroll-stage{position:sticky;top:87px;height:calc(100svh - 87px);min-height:420px;overflow:hidden;background:#f8f1e6;isolation:isolate;}
+.ew-scroll-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none;}
+.ew-scroll-tint{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(251,241,228,.86) 0%,rgba(251,241,228,.55) 21%,transparent 45%,transparent 73%,rgba(251,241,228,.12)),linear-gradient(0deg,rgba(248,237,219,.32),transparent 28%);}
+.ew-scroll-intro{position:absolute;left:clamp(25px,7vw,112px);top:50%;transform:translateY(-50%);width:min(510px,44vw);z-index:2;}
+.ew-scroll-kicker,.ew-scroll-story>span{display:block;color:#7a3340;letter-spacing:.22em;font-size:11px;font-weight:600;margin-bottom:22px}
+.ew-scroll-intro h1{font:400 clamp(51px,6.4vw,108px)/1.04 var(--serif,Georgia,serif);letter-spacing:-.064em;margin:0 0 25px;color:#30241d;}
+.ew-scroll-intro h1 em,.ew-scroll-story h2 em{color:#78313f;font-weight:400}
+.ew-scroll-intro p{max-width:380px;font-size:clamp(14px,1.25vw,18px);line-height:1.7;color:#655850}
+.ew-scroll-intro-foot{display:inline-flex;align-items:center;gap:18px;margin-top:42px;border-bottom:1px solid #a69582;padding-bottom:10px;color:#6d5349;font-size:10px;font-weight:500;letter-spacing:.19em;}
+.ew-scroll-stories{position:absolute;inset:0;z-index:3;pointer-events:none}
+.ew-scroll-story{position:absolute;top:50%;right:clamp(25px,7vw,125px);transform:translateY(18px);width:min(345px,28vw);opacity:0;visibility:hidden;background:rgba(251,244,230,.83);border:1px solid #d8c3b455;backdrop-filter:blur(14px);padding:30px 31px;box-shadow:0 15px 40px #6b4b3921;pointer-events:none}
+.ew-scroll-story:nth-child(2){top:25%}.ew-scroll-story:nth-child(3){top:59%}.ew-scroll-story:nth-child(4){top:34%}
+.ew-scroll-story>span{font-size:9px;margin-bottom:12px}
+.ew-scroll-story h2{font:400 clamp(25px,2.4vw,37px)/1.15 var(--serif,Georgia,serif);letter-spacing:-.048em;margin:0 0 15px;color:#37251f}
+.ew-scroll-story p{font-size:13px;line-height:1.6;color:#745f53;margin:0}
+.ew-scroll-action{display:inline-block;margin-top:19px;background:#78313f;color:#fff7e7;padding:12px 15px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;pointer-events:auto}
+.ew-scroll-progress{position:absolute;right:clamp(14px,3vw,45px);bottom:29px;z-index:5;display:flex;align-items:center;gap:16px;color:#7b4d4b;font-size:10px;letter-spacing:.14em}
+.ew-scroll-progress-track{height:75px;width:2px;background:#7b4d4b35}
+.ew-scroll-progress-track>span{display:block;height:100%;width:100%;background:#78313f;transform-origin:top center;transform:scaleY(0)}
+@media(max-width:760px){
+ .ew-scroll-zone{height:540svh;min-height:2500px}
+ .ew-scroll-stage{top:68px;height:calc(100svh - 68px);min-height:400px}
+ .ew-scroll-frame{object-fit:cover;object-position:49% center}
+ .ew-scroll-tint{background:linear-gradient(180deg,rgba(249,239,221,.83) 0%,rgba(249,239,221,.55) 27%,transparent 46%,transparent 70%,rgba(249,239,221,.64) 100%)}
+ .ew-scroll-intro{left:25px;right:25px;top:12%;transform:none;width:auto;max-width:420px}
+ .ew-scroll-intro h1{font-size:clamp(43px,11vw,66px);margin-bottom:13px}
+ .ew-scroll-intro p{font-size:14px;max-width:320px;line-height:1.55}
+ .ew-scroll-kicker{margin-bottom:12px;font-size:9px}
+ .ew-scroll-intro-foot{margin-top:12px;font-size:9px}
+ .ew-scroll-story{left:18px;right:18px;top:auto!important;bottom:37px;width:auto;padding:18px 21px;background:rgba(250,240,226,.91)}
+ .ew-scroll-story h2{font-size:clamp(24px,6.9vw,33px);margin-bottom:8px}
+ .ew-scroll-story p{font-size:12px}
+ .ew-scroll-story>span{margin-bottom:7px}
+ .ew-scroll-progress{right:11px;bottom:13px;gap:6px;font-size:8px;writing-mode:initial}
+ .ew-scroll-progress-label{display:none}
+ .ew-scroll-progress-track{height:52px}
+}
+@media(prefers-reduced-motion:reduce){.ew-scroll-story{backdrop-filter:none}}
+
+
+@media(min-width:761px) and (max-width:1100px){
+ .ew-scroll-stage{top:75px;height:calc(100svh - 75px)}
+}

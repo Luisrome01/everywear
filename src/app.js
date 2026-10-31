@@ -1,7 +1,9 @@
 import { PRODUCTS, CATEGORIES, MEDIA, money } from "./data.js";
 import { BRAND_MEDIA, LOOKBOOK_SLIDES } from "./brand-media.js";
 import { TV_PHOTOS } from "./tv-photos.js";
+import { scrollHeroMarkup, initScrollHero } from "./scroll-hero.js";
 import "./styles.css";
+import "./scroll-hero.css";
 
 const root = document.getElementById("app");
 const PHONE = String(import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
@@ -144,21 +146,8 @@ function editorialTV() {
 function home() {
   return `
     <main>
-      <section class="hero">
-        <div class="hero-copy">
-          <div class="hero-kicker"><span class="line"></span> EDICIÓN 01 / EUROPA</div>
-          <h1>Vístete de<br/><em>lo que eres.</em></h1>
-          <p class="hero-subtitle">Tu acceso a la moda europea. Una selección de piezas para expresarte, reinventarte y hacer cada look tuyo.</p>
-          <div class="hero-buttons">${actionLink("Descubrir colección", "#/catalogo")}<a href="#/shopper" class="hero-secondary">Personal shopper ${icon("arrow",17)}</a></div>
-          <div class="hero-bottom"><span>STYLE IS PERSONAL.</span><span>EVERY DAY. EVERY WEAR.</span></div>
-        </div>
-        <div class="hero-photo">
-          <img src="${MEDIA.hero}" alt="Editorial de moda femenina, inspiración Everywear" fetchpriority="high" />
-          <div class="hero-photo-chip"><span class="chip-star">*</span><span>CURATED<br/>EUROPEAN STYLE</span></div>
-          <div class="hero-photo-caption">THE NEW EVERYDAY / 2026</div>
-        </div>
-        <div class="hero-vertical">EVERYWEAR — EVERY OCCASION</div>
-      </section>
+      ${scrollHeroMarkup()}
+
       <div class="marquee" aria-label="Everywear, estilo para cada día"><div class="marquee-inner">${Array(3).fill(`<span>EVERY DAY</span><span class="marquee-flower">*</span><span>EVERY STYLE</span><span class="marquee-flower">*</span><span>EVERY WEAR</span><span class="marquee-flower">*</span>`).join("")}</div></div>
       <section class="brand-story section reveal-on-scroll" id="about-us" aria-labelledby="brand-story-title">
         <div class="section-topline"><span>01 / LA MARCA</span><span>EVERYWEAR — OUR WORLD</span></div>
@@ -460,6 +449,7 @@ function render() {
   updateLookbook();
   observeReveals();
   initTVRotation();
+  initScrollHero();
 }
 function openWhatsApp(message) {
   window.open(waLink(message), "_blank", "noopener,noreferrer");
