@@ -136,10 +136,6 @@ function editorialTV() {
           ${tvScreen("bottom", 2)}
           <img class="tv-photoreal-frame" src="/brand/tv-stack.svg" alt="" aria-hidden="true" draggable="false" />
         </div>
-        <div class="tv-side-controls" role="group" aria-label="Cambiar las fotografías de los televisores">
-          <button type="button" data-action="tv-prev" aria-label="Ver combinación anterior">${icon("back",22)}</button>
-          <button type="button" data-action="tv-next" aria-label="Ver siguiente combinación">${icon("arrow",22)}</button>
-        </div>
       </div>
     </div>
   </section>`;
@@ -501,8 +497,6 @@ root.addEventListener("click", event => {
   if (!target) return;
   const a = target.dataset.action;
   if (a === "tv-change") { tvRotation?.change(Number(target.dataset.tvScreen)); return; }
-  if (a === "tv-next") { tvRotation?.changeAll(1); return; }
-  if (a === "tv-prev") { tvRotation?.changeAll(-1); return; }
   if (a === "lookbook-next") { moveLookbook(1); return; }
   if (a === "lookbook-prev") { moveLookbook(-1); return; }
   if (a === "lookbook-go") { state.lookbookIndex = Number(target.dataset.index); updateLookbook(); return; }

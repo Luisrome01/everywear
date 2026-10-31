@@ -584,22 +584,12 @@ h1, h2, h3, p { margin-top: 0; }
   box-shadow:inset 0 0 19px #15080d50;
   background:linear-gradient(135deg,#fff9f010,transparent 40%,#21071113);
 }
-.tv-side-controls{
-  position:absolute;z-index:4;right:-45px;top:48%;
-  display:flex;gap:10px;transform:translateY(-50%);
-}
-.tv-side-controls button{
-  display:grid;place-items:center;width:50px;height:50px;padding:0;
-  background:#fff7eeae;border:1px solid #fff6e65e;color:#58303a;border-radius:50%;
-  transition:background .2s,transform .2s;backdrop-filter:blur(7px);
-}
-.tv-side-controls button:hover{background:#fff7ed;transform:scale(1.07)}
 @media(max-width:1150px){
   .tv-editorial-content{grid-template-columns:minmax(0,46%) minmax(0,54%);min-height:700px}
   .tv-editorial-copy h2{font-size:clamp(49px,5.5vw,75px)}
   .tv-social-link{min-width:0;min-height:56px;padding:0 17px;letter-spacing:.09em}
-  .tv-side-controls{right:-10px;top:45%}
-  .tv-side-controls button{width:41px;height:41px}
+
+
 }
 @media(max-width:760px){
   .tv-editorial-section{padding:60px 19px 43px}
@@ -613,15 +603,65 @@ h1, h2, h3, p { margin-top: 0; }
   .tv-progress-line{width:100px}
   .tv-scene{height:auto;width:100%;align-items:center}
   .tv-stage{width:min(100%,460px)}
-  .tv-side-controls{right:-2px;top:49%;gap:5px}
-  .tv-side-controls button{width:38px;height:38px}
+
+
 }
 @media(max-width:370px){
   .tv-editorial-copy h2{font-size:46px}
   .tv-social-link{min-width:0;font-size:9px}
-  .tv-side-controls{right:-2px}
-  .tv-side-controls button{width:33px;height:33px}
+
+
 }
 @media(prefers-reduced-motion:reduce){
-  .tv-live-next,.tv-progress-line span,.tv-side-controls button{transition:none!important}
+  .tv-live-next,.tv-progress-line span
+}
+
+
+/* Prevent sideways page movement on iPhone while preserving intentional pinch zoom
+   and horizontal swipe gestures inside the lookbook. */
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
+}
+#app {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+main, .catalog-page, .hero, .tv-editorial-section, .lookbook-section {
+  max-width: 100%;
+  min-width: 0;
+}
+button, a, input, select {
+  touch-action: manipulation;
+}
+@media (max-width: 760px) {
+  .header-wrap, .hero-copy, .section, .catalog-toolbar,
+  .catalog-controls, .tv-editorial-content, .tv-editorial-copy,
+  .lookbook-shell, .brand-story-layout, .personal-shopper {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .tv-scene, .tv-stage {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .tv-social-link {
+    width: fit-content;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+@supports not (overflow: clip) {
+  html, body, #app { overflow-x: hidden; }
 }
