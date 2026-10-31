@@ -6,6 +6,7 @@ import "./styles.css";
 const root = document.getElementById("app");
 const PHONE = String(import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
 const CART_KEY = "everywear_selection_v1";
+let tvSlideNumber = 0;
 const instagram = "https://www.instagram.com/everywear.ve?srtk=MTJycHJxNXl2eXZyOQ==";
 
 const getSavedCart = () => {
@@ -122,23 +123,25 @@ function editorialTV() {
   return `<section class="tv-editorial-section reveal-on-scroll" aria-labelledby="tv-editorial-title">
     <div class="tv-editorial-content">
       <div class="tv-editorial-copy">
-        <div class="tv-eyebrow"><span>NEW PIECES, NEW OBSESSIONS</span><span class="tv-asterisk">*</span></div>
-        <h2 id="tv-editorial-title">Now showing:<br/><em>everywear.</em></h2>
-        <p>Tres pantallas, infinitas combinaciones. Descubre prendas que inspiran tu estilo y sigue nuestras novedades en Instagram.</p>
-        <a class="tv-social-link" href="${instagram}" target="_blank" rel="noopener noreferrer">${icon("insta",18)} Seguir @everywear.ve ${icon("arrowup",17)}</a>
-        <div class="tv-editorial-note">THE STYLE CHANNEL / EDICIÓN 01</div>
+        <div class="tv-eyebrow">03 / NOW SHOWING</div>
+        <h2 id="tv-editorial-title">New pieces,<br/><em>new obsessions.</em></h2>
+        <p>Looks que inspiran tu día a día. Descubre más drops, ideas y detrás de cámaras en nuestro Instagram.</p>
+        <a class="tv-social-link" href="${instagram}" target="_blank" rel="noopener noreferrer">${icon("insta",19)} Seguir @everywear.ve ${icon("arrowup",19)}</a>
+        <div class="tv-editorial-progress" aria-live="polite"><span id="tv-slide-current">01</span><span class="tv-progress-line"><span id="tv-progress-fill"></span></span><span>04</span></div>
       </div>
       <div class="tv-scene">
-        <div class="tv-stage" role="group" aria-label="Tres televisores retro color vino con prendas que cambian aleatoriamente">
+        <div class="tv-stage" role="group" aria-label="Tres televisores color vino, con fotografías de moda que cambian de forma independiente">
           ${tvScreen("top", 0)}
           ${tvScreen("middle", 1)}
           ${tvScreen("bottom", 2)}
           <img class="tv-photoreal-frame" src="/brand/tv-stack.svg" alt="" aria-hidden="true" draggable="false" />
         </div>
-        <p class="tv-hint">Cada pantalla cambia de forma independiente · Toca una pantalla para cambiar la prenda</p>
+        <div class="tv-side-controls" role="group" aria-label="Cambiar las fotografías de los televisores">
+          <button type="button" data-action="tv-prev" aria-label="Ver combinación anterior">${icon("back",22)}</button>
+          <button type="button" data-action="tv-next" aria-label="Ver siguiente combinación">${icon("arrow",22)}</button>
+        </div>
       </div>
     </div>
-    <p class="tv-editorial-disclaimer">Imágenes de demostración hasta incorporar las fotografías definitivas de Everywear.</p>
   </section>`;
 }
 
@@ -438,6 +441,14 @@ function initTVRotation() {
   observer.observe(scene);
   tvRotation = {
     change,
+    changeAll: async direction => {
+      tvSlideNumber = (tvSlideNumber + direction + 4) % 4;
+      const num = document.getElementById("tv-slide-current");
+      const progress = document.getElementById("tv-progress-fill");
+      if (num) num.textContent = String(tvSlideNumber + 1).padStart(2, "0");
+      if (progress) progress.style.width = ((tvSlideNumber + 1) * 25) + "%";
+      await Promise.all(screens.map((_, i) => change(i)));
+    },
     stop: () => {
       alive = false;
       pause();
@@ -490,6 +501,8 @@ root.addEventListener("click", event => {
   if (!target) return;
   const a = target.dataset.action;
   if (a === "tv-change") { tvRotation?.change(Number(target.dataset.tvScreen)); return; }
+  if (a === "tv-next") { tvRotation?.changeAll(1); return; }
+  if (a === "tv-prev") { tvRotation?.changeAll(-1); return; }
   if (a === "lookbook-next") { moveLookbook(1); return; }
   if (a === "lookbook-prev") { moveLookbook(-1); return; }
   if (a === "lookbook-go") { state.lookbookIndex = Number(target.dataset.index); updateLookbook(); return; }
