@@ -37,7 +37,7 @@
 </g>
 <!-- Middle TV offset and facing the viewer -->
 <g filter="url(#bigShadow)">
- <path d="M72 411 145 369 725 387 770 415 771 745 709 756 73 752Z" fill="url(#side)" stroke="#3d071e" stroke-width="7"/>
+ <path d="M72 411 145 369 725 387 770 415 708 423 72 411Z" fill="url(#side)" stroke="#3d071e" stroke-width="7"/><path d="M707 414 770 415 771 745 709 756Z" fill="url(#side)" stroke="#3d071e" stroke-width="7"/>
  <rect x="72" y="389" width="646" height="364" rx="20" fill="url(#body)" mask="url(#m-mid)" stroke="#3b061a" stroke-width="9"/>
  <rect x="83" y="402" width="623" height="339" rx="18" stroke="url(#rim)" stroke-width="6"/>
  <rect x="98" y="427" width="472" height="285" rx="48" stroke="#2b0414" stroke-width="16"/>
@@ -54,7 +54,7 @@
 </g>
 <!-- Lowest CRT -->
 <g filter="url(#bigShadow)">
- <path d="M56 768 138 744 694 759 768 793 761 1041 706 1070 55 1078Z" fill="url(#side)" stroke="#400918" stroke-width="7"/>
+ <path d="M56 768 138 744 694 759 768 793 706 794 55 778Z" fill="url(#side)" stroke="#400918" stroke-width="7"/><path d="M706 791 768 793 761 1041 706 1070Z" fill="url(#side)" stroke="#400918" stroke-width="7"/>
  <rect x="55" y="750" width="653" height="326" rx="20" fill="url(#body)" mask="url(#m-low)" stroke="#370517" stroke-width="9"/>
  <rect x="66" y="765" width="631" height="297" rx="18" stroke="url(#rim)" stroke-width="6"/>
  <rect x="82" y="788" width="464" height="251" rx="48" stroke="#210512" stroke-width="16"/>
