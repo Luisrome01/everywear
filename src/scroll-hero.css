@@ -15,7 +15,8 @@
 .ew-scroll-story>span{font-size:9px;margin-bottom:12px}
 .ew-scroll-story h2{font:400 clamp(25px,2.4vw,37px)/1.15 var(--serif,Georgia,serif);letter-spacing:-.048em;margin:0 0 15px;color:#37251f}
 .ew-scroll-story p{font-size:13px;line-height:1.6;color:#745f53;margin:0}
-.ew-scroll-action{display:inline-block;margin-top:19px;background:#78313f;color:#fff7e7;padding:12px 15px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;pointer-events:auto}
+.ew-scroll-action{display:inline-flex;align-items:center;gap:9px;margin-top:19px;background:#78313f;color:#fff7e7;padding:12px 15px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;pointer-events:auto}
+.ew-scroll-action-icon{display:block;flex:none;width:16px;height:16px;color:inherit}
 .ew-scroll-progress{position:absolute;right:clamp(14px,3vw,45px);bottom:29px;z-index:5;display:flex;align-items:center;gap:16px;color:#7b4d4b;font-size:10px;letter-spacing:.14em}
 .ew-scroll-progress-track{height:75px;width:2px;background:#7b4d4b35}
 .ew-scroll-progress-track>span{display:block;height:100%;width:100%;background:#78313f;transform-origin:top center;transform:scaleY(0)}
@@ -34,7 +35,6 @@
  .ew-scroll-story p{font-size:12px}
  .ew-scroll-story>span{margin-bottom:7px}
  .ew-scroll-progress{right:11px;bottom:13px;gap:6px;font-size:8px;writing-mode:initial}
- .ew-scroll-progress-label{display:none}
  .ew-scroll-progress-track{height:52px}
 }
 @media(prefers-reduced-motion:reduce){.ew-scroll-story{backdrop-filter:none}}

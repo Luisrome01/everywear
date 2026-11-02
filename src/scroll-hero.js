@@ -15,9 +15,9 @@ export function scrollHeroMarkup() {
         <article class="ew-scroll-story" data-start=".18" data-end=".39"><span>01 / EVERY DAY</span><h2>Un look,<br/><em>mil posibilidades.</em></h2><p>Para todos esos planes que empiezan sin avisar.</p></article>
         <article class="ew-scroll-story" data-start=".41" data-end=".62"><span>02 / THE DETAILS</span><h2>La magia<br/><em>está en los detalles.</em></h2><p>Piezas especiales, fáciles de hacer tuyas.</p></article>
         <article class="ew-scroll-story" data-start=".64" data-end=".82"><span>03 / CURATED STYLE</span><h2>Every wear.<br/><em>Every version of you.</em></h2><p>Tu acceso a una nueva forma de vestir.</p></article>
-        <article class="ew-scroll-story" data-start=".84" data-end="1.01"><span>04 / YOUR NEXT LOOK</span><h2>Tu próximo<br/><em>favorito te espera.</em></h2><p>La colección está a un paso.</p><a class="ew-scroll-action" href="#/catalogo">Explorar catálogo ↗</a></article>
+        <article class="ew-scroll-story" data-start=".84" data-end="1.01"><span>04 / YOUR NEXT LOOK</span><h2>Tu próximo<br/><em>favorito te espera.</em></h2><p>La colección está a un paso.</p><a class="ew-scroll-action" href="#/catalogo">Explorar catálogo <svg class="ew-scroll-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 17 17 7M8 7h9v9"/></svg></a></article>
       </div>
-      <div class="ew-scroll-progress" aria-hidden="true"><span class="ew-scroll-progress-label">SCROLL TO EXPLORE</span><div class="ew-scroll-progress-track"><span id="ew-scroll-progress-fill"></span></div><span id="ew-scroll-frame-count">01 / 60</span></div>
+      <div class="ew-scroll-progress" aria-hidden="true"><div class="ew-scroll-progress-track"><span id="ew-scroll-progress-fill"></span></div></div>
     </div>
   </section>`;
 }
@@ -31,7 +31,6 @@ export function initScrollHero() {
   const intro = document.getElementById('ew-scroll-intro');
   const stories = [...zone.querySelectorAll('.ew-scroll-story')];
   const bar = document.getElementById('ew-scroll-progress-fill');
-  const count = document.getElementById('ew-scroll-frame-count');
   const images = Array.from({length: SCROLL_FRAMES}, (_, i) => path(i));
   const ready = new Uint8Array(SCROLL_FRAMES);
   ready[0] = frame.complete && frame.naturalWidth > 0 ? 1 : 0;
@@ -80,7 +79,6 @@ export function initScrollHero() {
     const index=nearest(desired);
     if(index>=0 && index!==active){ active=index; frame.src=images[index]; }
     if(bar) bar.style.transform=`scaleY(${p})`;
-    if(count) count.textContent=`${String(desired+1).padStart(2,'0')} / ${SCROLL_FRAMES}`;
     const introAlpha=Math.max(0,Math.min(1,(.22-p)/.16));
     if(intro){intro.style.opacity=String(introAlpha);intro.style.visibility=introAlpha<.02?'hidden':'visible';}
     for (const c of stories) {
