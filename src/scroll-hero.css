@@ -1,5 +1,5 @@
 /* Scoped experimental scroll scene, only video-scroll-test. */
-.ew-scroll-zone{height:350svh;min-height:1500px;position:relative;isolation:isolate;background:#f8efdf;max-width:100%;}
+.ew-scroll-zone{height:480svh;min-height:2200px;position:relative;isolation:isolate;background:#f8efdf;max-width:100%;}
 .ew-scroll-stage{position:sticky;top:87px;height:calc(100svh - 87px);min-height:420px;overflow:hidden;background:#f8f1e6;isolation:isolate;}
 .ew-scroll-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none;}
 .ew-scroll-tint{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(251,241,228,.86) 0%,rgba(251,241,228,.55) 21%,transparent 45%,transparent 73%,rgba(251,241,228,.12)),linear-gradient(0deg,rgba(248,237,219,.32),transparent 28%);}
@@ -20,7 +20,7 @@
 .ew-scroll-progress-track{height:75px;width:2px;background:#7b4d4b35}
 .ew-scroll-progress-track>span{display:block;height:100%;width:100%;background:#78313f;transform-origin:top center;transform:scaleY(0)}
 @media(max-width:760px){
- .ew-scroll-zone{height:330svh;min-height:1450px}
+ .ew-scroll-zone{height:540svh;min-height:2500px}
  .ew-scroll-stage{top:68px;height:calc(100svh - 68px);min-height:400px}
  .ew-scroll-frame{object-fit:cover;object-position:49% center}
  .ew-scroll-tint{background:linear-gradient(180deg,rgba(249,239,221,.83) 0%,rgba(249,239,221,.55) 27%,transparent 46%,transparent 70%,rgba(249,239,221,.64) 100%)}
@@ -42,114 +42,4 @@
 
 @media(min-width:761px) and (max-width:1100px){
  .ew-scroll-stage{top:75px;height:calc(100svh - 75px)}
-}
-
-
-/* Scrolling never depends on frames or network. */
-
-.ew-scroll-load-status{
-  position:absolute;z-index:6;bottom:82px;left:clamp(22px,4vw,60px);
-  max-width:min(320px,85%);padding:8px 12px;background:rgba(250,244,232,.91);
-  color:#75303e;font-size:12px;line-height:1.4;
-}
-.ew-scroll-load-status[hidden]{display:none}
-@media(max-width:760px){
-
- .ew-scroll-load-status{left:18px;bottom:55px;max-width:75%;font-size:11px}
- .ew-scroll-progress{right:12px;bottom:13px}
-}
-@media(prefers-reduced-motion:reduce){
- .ew-scroll-zone{height:100svh;min-height:550px}
- .ew-scroll-stage{position:relative;top:0;height:100%;min-height:550px}
- .ew-scroll-story{display:none}
-}
-
-/* Poster remains visible and the animated image sits above it. */
-.ew-scroll-animated {
-  position:absolute;inset:0;width:100%;height:100%;
-  display:block;object-fit:cover;object-position:center center;
-  opacity:0;user-select:none;-webkit-user-drag:none;pointer-events:none;
-}
-@media(max-width:760px){.ew-scroll-animated{object-position:49% center}}
-.ew-scroll-stage{background:#f8f1e6 url("/brand/girl-bag.webp") center center / cover no-repeat}
-
-
-/* Everywear editorial preloader — only the video-scroll-test Home. */
-body.ew-is-loading { overflow:hidden !important; }
-.ew-boot {
-  position:fixed;inset:0;z-index:9999;
-  display:flex;align-items:center;justify-content:center;
-  background:#f7efdf;color:#3f332a;
-  padding:30px 22px;min-height:100dvh;
-  opacity:1;visibility:visible;transition:opacity .4s ease,visibility .4s ease;
-}
-.ew-boot[hidden] {display:none!important}
-.ew-boot.ew-boot-exit {opacity:0;visibility:hidden;pointer-events:none}
-.ew-boot::before {
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse at 50% 45%,rgba(235,206,182,.24),transparent 55%);
-}
-.ew-boot-content {width:min(410px,100%);position:relative;text-align:center}
-.ew-boot-edition {
-  display:block;font-size:10px;font-weight:600;letter-spacing:.25em;
-  color:#7f4b4f;margin-bottom:25px;
-}
-.ew-boot-brand {
-  display:flex;align-items:baseline;justify-content:center;
-  color:#687057;white-space:nowrap;line-height:1;
-}
-.ew-boot-brand>span {
-  font:300 clamp(60px,12vw,90px)/1 "Jost",sans-serif;
-  letter-spacing:-.095em;
-}
-.ew-boot-brand>em {
-  font:normal clamp(79px,15vw,115px)/.7 "Italianno",cursive;
-  transform:translate(-4px,7px);letter-spacing:-.06em;
-}
-.ew-boot-star {
-  display:block;font:normal 30px Georgia,serif;color:#843447;
-  margin:28px auto 20px;line-height:1;
-}
-.ew-boot-message {
-  font:400 clamp(18px,3.5vw,24px)/1.35 var(--serif,Georgia,serif);
-  letter-spacing:-.025em;color:#4d3c35;margin:0 0 32px;
-}
-.ew-boot-line {
-  position:relative;height:2px;width:100%;
-  background:#d9c7b5;overflow:hidden;
-}
-.ew-boot-line>span {
-  position:absolute;inset:0 auto 0 0;width:0;
-  background:#7f3144;transition:width .2s ease;
-}
-.ew-boot-detail {
-  display:flex;justify-content:space-between;align-items:center;
-  gap:16px;margin-top:12px;font-size:10px;letter-spacing:.13em;
-  color:#857567;text-transform:uppercase;
-}
-.ew-boot-detail #ew-boot-status {text-align:left}
-.ew-boot-detail #ew-boot-percent {
-  font-variant-numeric:tabular-nums;color:#7c3041;
-  font-weight:600;min-width:35px;text-align:right;
-}
-.ew-boot-continue {
-  margin-top:29px;background:transparent;color:#7a3141;
-  border:1px solid #a97a78;padding:12px 18px;
-  text-transform:uppercase;font-size:10px;font-weight:600;letter-spacing:.16em;
-  cursor:pointer;
-}
-.ew-boot-continue:hover {background:#f0e3d5}
-.ew-boot-continue[hidden] {display:none!important}
-.ew-boot-bottom {
-  position:absolute;bottom:clamp(20px,5vh,48px);left:16px;right:16px;
-  text-align:center;color:#998979;font-size:9px;letter-spacing:.2em;
-}
-@media(max-width:760px) {
-  .ew-boot-content {max-width:320px}
-  .ew-boot-edition {font-size:9px}
-  .ew-boot-detail {font-size:9px}
-  .ew-boot-message {margin-bottom:26px}
-}
-@media(prefers-reduced-motion:reduce){
-  .ew-boot,.ew-boot-line>span {transition:none}
 }

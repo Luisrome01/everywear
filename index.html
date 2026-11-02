@@ -2,10 +2,9 @@
 <html lang="es">
   <head>
     <script>
-      // Prevent browsers from restoring the test Home at frame 60 after reload.
-      if (!location.hash || location.hash === "#/") {
-        try { history.scrollRestoration = "manual"; } catch (e) {}
-      }
+      // Disable browser restoration before scripts mount the Home.
+      window.__EW_ENTRY_START = performance.now();
+      try { history.scrollRestoration = "manual"; } catch (e) {}
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,13 +13,76 @@
     <meta property="og:title" content="Everywear — Your access to European fashion" />
     <meta property="og:description" content="Un espacio para descubrir tu estilo. Moda, detalles y piezas para hacerlas tuyas." />
     <title>Everywear | Your access to European fashion</title>
+
+    <style>
+      /* Critical above-the-fold loader. Inline to avoid a blank flash on repeat visits. */
+      html { background:#f5ecd6; }
+      body.ew-entry-locked { overflow:hidden!important; }
+      .ew-entry-curtain {
+        position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;
+        min-height:100dvh;padding:24px;background:#f5ecd6;color:#7a8061;
+        box-sizing:border-box;box-shadow:0 9px 26px rgba(74,55,43,.08);
+        transform:translate3d(0,0,0);
+        transition:transform 750ms cubic-bezier(.22,1,.36,1);
+        will-change:transform;
+      }
+      .ew-entry-curtain.ew-entry-leaving {transform:translate3d(0,-105%,0)}
+      .ew-entry-body {
+        width:min(510px,100%);display:flex;align-items:center;
+        flex-direction:column;text-align:center;transform:translateY(-8px);
+      }
+      .ew-entry-wordmark {
+        display:flex;align-items:baseline;justify-content:center;
+        color:#81856a;white-space:nowrap;max-width:100%;
+        line-height:.9;user-select:none;
+      }
+      .ew-entry-wordmark span {
+        font:300 clamp(61px,10.8vw,108px)/1 "Jost","Helvetica Neue",Arial,sans-serif;
+        letter-spacing:-.09em;
+      }
+      .ew-entry-wordmark em {
+        font:normal clamp(76px,13vw,135px)/.7 "Italianno",Georgia,serif;
+        letter-spacing:-.055em;transform:translate(-3px,8px);
+      }
+      .ew-entry-caption {
+        margin:42px 0 35px;color:#80856b;
+        font:500 clamp(10px,1.55vw,17px)/1.6 "Jost",Arial,sans-serif;
+        letter-spacing:.175em;text-transform:uppercase;
+      }
+      .ew-entry-track {
+        display:block;width:min(325px,75vw);height:2px;
+        background:#cec7ac;overflow:hidden;border-radius:20px;
+      }
+      .ew-entry-fill {
+        display:block;width:0;height:100%;background:#793347;
+        border-radius:inherit;transition:width 85ms linear;
+      }
+      @media(max-width:600px){
+        .ew-entry-caption {margin-top:35px;margin-bottom:30px;letter-spacing:.11em}
+        .ew-entry-body {transform:translateY(-16px)}
+      }
+      @media(prefers-reduced-motion:reduce){
+        .ew-entry-curtain{transition-duration:180ms}
+        .ew-entry-fill{transition:none}
+      }
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Italianno&family=Jost:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
-  <body>
+  <body class="ew-entry-locked">
+    <div id="ew-entry-curtain" class="ew-entry-curtain" role="status" aria-label="Preparando Everywear">
+      <div class="ew-entry-body">
+        <div class="ew-entry-wordmark" aria-label="Everywear"><span>every</span><em>wear.</em></div>
+        <p class="ew-entry-caption">YOUR ACCESS TO EUROPEAN FASHION</p>
+        <div class="ew-entry-track" role="progressbar" id="ew-entry-status"
+             aria-label="Progreso de carga" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <span class="ew-entry-fill" id="ew-entry-fill"></span>
+        </div>
+      </div>
+    </div>
     <div id="app"></div>
-    <script type="module" src="/src/app.js"></script>
+    <script type="module" src="/src/entry-loader.js"></script>
   </body>
 </html>
