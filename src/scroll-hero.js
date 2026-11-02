@@ -5,7 +5,10 @@ export const SCROLL_FRAMES = 60;
 const override = new URLSearchParams(window.location.search).get("scrollQuality");
 const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
 const slowNetwork = Boolean(connection?.saveData || /^(slow-2g|2g|3g)$/.test(connection?.effectiveType || ""));
-const lowQuality = override === "720" || (override !== "hd" && slowNetwork);
+const smallScreen = window.matchMedia("(max-width: 760px)").matches;
+// The original video was 720p: on small screens the native frames decode faster
+// and avoid the memory overhead of upscaled 1080p. ?scrollQuality=hd overrides.
+const lowQuality = override === "720" || (override !== "hd" && (slowNetwork || smallScreen));
 const folder = lowQuality ? "scroll-frames" : "scroll-frames-hd";
 const path = i => "/" + folder + "/frame_" + String(i + 1).padStart(3, "0") + ".webp";
 const fallbackPath = i => "/scroll-frames/frame_" + String(i + 1).padStart(3, "0") + ".webp";
