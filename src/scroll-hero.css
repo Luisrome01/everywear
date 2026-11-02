@@ -1,5 +1,5 @@
 /* Scoped experimental scroll scene, only video-scroll-test. */
-.ew-scroll-zone{height:480svh;min-height:2200px;position:relative;isolation:isolate;background:#f8efdf;max-width:100%;}
+.ew-scroll-zone{height:350svh;min-height:1500px;position:relative;isolation:isolate;background:#f8efdf;max-width:100%;}
 .ew-scroll-stage{position:sticky;top:87px;height:calc(100svh - 87px);min-height:420px;overflow:hidden;background:#f8f1e6;isolation:isolate;}
 .ew-scroll-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none;}
 .ew-scroll-tint{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(251,241,228,.86) 0%,rgba(251,241,228,.55) 21%,transparent 45%,transparent 73%,rgba(251,241,228,.12)),linear-gradient(0deg,rgba(248,237,219,.32),transparent 28%);}
@@ -20,7 +20,7 @@
 .ew-scroll-progress-track{height:75px;width:2px;background:#7b4d4b35}
 .ew-scroll-progress-track>span{display:block;height:100%;width:100%;background:#78313f;transform-origin:top center;transform:scaleY(0)}
 @media(max-width:760px){
- .ew-scroll-zone{height:540svh;min-height:2500px}
+ .ew-scroll-zone{height:330svh;min-height:1450px}
  .ew-scroll-stage{top:68px;height:calc(100svh - 68px);min-height:400px}
  .ew-scroll-frame{object-fit:cover;object-position:49% center}
  .ew-scroll-tint{background:linear-gradient(180deg,rgba(249,239,221,.83) 0%,rgba(249,239,221,.55) 27%,transparent 46%,transparent 70%,rgba(249,239,221,.64) 100%)}
@@ -42,4 +42,33 @@
 
 @media(min-width:761px) and (max-width:1100px){
  .ew-scroll-stage{top:75px;height:calc(100svh - 75px)}
+}
+
+
+/* Scrolling never depends on frames or network. The skip control is always usable. */
+.ew-scroll-skip{
+  position:absolute;z-index:6;bottom:26px;left:clamp(22px,4vw,60px);
+  display:inline-flex;align-items:center;gap:11px;padding:12px 15px;
+  border:1px solid rgba(122,51,64,.35);border-radius:2px;
+  background:rgba(250,244,232,.88);color:#75303e;
+  font:600 10px var(--sans,sans-serif);letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;backdrop-filter:blur(8px);
+}
+.ew-scroll-skip:hover{background:#fff9ee}
+.ew-scroll-skip:focus-visible{outline:2px solid #75303e;outline-offset:3px}
+.ew-scroll-load-status{
+  position:absolute;z-index:6;bottom:82px;left:clamp(22px,4vw,60px);
+  max-width:min(320px,85%);padding:8px 12px;background:rgba(250,244,232,.91);
+  color:#75303e;font-size:12px;line-height:1.4;
+}
+.ew-scroll-load-status[hidden]{display:none}
+@media(max-width:760px){
+ .ew-scroll-skip{left:18px;bottom:12px;padding:10px 11px;font-size:9px}
+ .ew-scroll-load-status{left:18px;bottom:55px;max-width:75%;font-size:11px}
+ .ew-scroll-progress{right:12px;bottom:53px}
+}
+@media(prefers-reduced-motion:reduce){
+ .ew-scroll-zone{height:100svh;min-height:550px}
+ .ew-scroll-stage{position:relative;top:0;height:100%;min-height:550px}
+ .ew-scroll-story{display:none}
 }
