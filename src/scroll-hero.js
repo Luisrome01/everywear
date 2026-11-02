@@ -14,7 +14,7 @@ export function scrollHeroMarkup() {
   return `<section class="ew-scroll-zone" id="everywear-scroll-experience" aria-label="Editorial Everywear, camina con nuestro estilo">
     <div class="ew-scroll-stage" id="ew-scroll-stage">
       <img id="ew-scroll-poster" class="ew-scroll-frame" src="/scroll-frames/frame_001.webp" alt="Modelo de Everywear caminando con bolsa de la marca" draggable="false" fetchpriority="high" decoding="async" loading="eager" />
-      <canvas id="ew-scroll-canvas" class="ew-scroll-canvas" aria-hidden="true"></canvas>
+      <img id="ew-scroll-animated" class="ew-scroll-animated" alt="" aria-hidden="true" draggable="false" decoding="async" />
       <div class="ew-scroll-tint" aria-hidden="true"></div>
       <div class="ew-scroll-intro" id="ew-scroll-intro"><span class="ew-scroll-kicker">EVERYWEAR / EDICIÓN 01</span><h1>Tu estilo<br/><em>en movimiento.</em></h1><p>Prendas que hablan de ti. Descubre una selección creada para acompañarte a donde vayas.</p><span class="ew-scroll-intro-foot">DESLIZA PARA DESCUBRIR <span aria-hidden="true">↓</span></span></div>
       <div class="ew-scroll-stories" aria-label="Momentos de la colección">
@@ -23,7 +23,6 @@ export function scrollHeroMarkup() {
         <article class="ew-scroll-story" data-start=".64" data-end=".82"><span>03 / CURATED STYLE</span><h2>Every wear.<br/><em>Every version of you.</em></h2><p>Tu acceso a una nueva forma de vestir.</p></article>
         <article class="ew-scroll-story" data-start=".84" data-end="1.01"><span>04 / YOUR NEXT LOOK</span><h2>Tu próximo<br/><em>favorito te espera.</em></h2><p>La colección está a un paso.</p><a class="ew-scroll-action" href="#/catalogo">Explorar catálogo ↗</a></article>
       </div>
-      <button id="ew-scroll-skip" class="ew-scroll-skip" type="button">Saltar animación <span aria-hidden="true">↓</span></button>
       <span id="ew-scroll-load-status" class="ew-scroll-load-status" role="status" aria-live="polite" hidden></span>
       <div class="ew-scroll-progress" aria-hidden="true"><span class="ew-scroll-progress-label">SCROLL TO EXPLORE</span><div class="ew-scroll-progress-track"><span id="ew-scroll-progress-fill"></span></div><span id="ew-scroll-frame-count">01 / 60</span></div>
     </div>
@@ -32,244 +31,202 @@ export function scrollHeroMarkup() {
 
 
 
+
 let teardown = null;
 
-// A permanent poster + canvas make the animation fail-open:
-// incomplete/failed frames NEVER hide the last visible scene.
-// Scroll and copy remain functional without waiting for network or decoding.
+// Progressive image-based scroll sequence. The first frame stays behind the
+// active layer, so a failed or delayed frame never leaves an empty hero.
 export function initScrollHero() {
   if (teardown) { teardown(); teardown = null; }
   const zone = document.getElementById("everywear-scroll-experience");
-  const stage = document.getElementById("ew-scroll-stage");
+  const activeImage = document.getElementById("ew-scroll-animated");
   const poster = document.getElementById("ew-scroll-poster");
-  const canvas = document.getElementById("ew-scroll-canvas");
-  if (!zone || !stage || !poster || !canvas) return;
+  if (!zone || !activeImage || !poster) return;
 
-  const ctx = canvas.getContext("2d", { alpha: true });
   const intro = document.getElementById("ew-scroll-intro");
-  const stories = Array.from(zone.querySelectorAll(".ew-scroll-story"));
+  const stories = [...zone.querySelectorAll(".ew-scroll-story")];
   const bar = document.getElementById("ew-scroll-progress-fill");
-  const counter = document.getElementById("ew-scroll-frame-count");
-  const skip = document.getElementById("ew-scroll-skip");
+  const count = document.getElementById("ew-scroll-frame-count");
   const status = document.getElementById("ew-scroll-load-status");
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const abort = new AbortController();
-  const signal = abort.signal;
+  const motionReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const controller = new AbortController();
   const cache = new Map();
-  const failed = new Set();
-  const maxInFlight = slowNetwork ? 1 : 2;
-  const cacheLimit = slowNetwork ? 5 : 9;
-  let raf = 0, desired = 0, shown = -1, displayedImage = null;
-  let inflight = 0, destroyed = false, degraded = false;
-  let pixelW = 0, pixelH = 0;
+  const loading = new Map();
+  const failures = new Map();
+  const maxRequests = slowNetwork ? 2 : 4;
+  const maxCached = slowNetwork ? 8 : 14;
+  let destroyed = false, requested = 0, displayed = -1, raf = 0, loadErrors = 0;
 
-  function tell(message) {
+  function message(value) {
     if (!status) return;
-    status.textContent = message || "";
-    status.hidden = !message;
+    status.textContent = value || "";
+    status.hidden = !value;
   }
 
-  // Never hide the poster; it is independent of the frame downloader.
+  // Keep an independent, actual img element rather than drawing to canvas.
+  // This remains visible even if the animation download fails entirely.
   poster.addEventListener("error", () => {
-    if (poster.dataset.fallback) return;
-    poster.dataset.fallback = "1";
+    if (poster.dataset.fallback === "yes") return;
+    poster.dataset.fallback = "yes";
     poster.src = "/brand/girl-bag.webp";
-  }, { signal });
+  }, { signal: controller.signal });
 
-  skip?.addEventListener("click", () => {
-    const next = zone.nextElementSibling || document.getElementById("personal-shopper");
-    next?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
-  }, { signal });
+  activeImage.addEventListener("error", () => {
+    activeImage.style.opacity = "0";
+    displayed = -1;
+  }, { signal: controller.signal });
 
   function progress() {
     const vh = window.innerHeight || document.documentElement.clientHeight;
-    const distance = Math.max(1, zone.offsetHeight - vh);
-    return Math.max(0, Math.min(1, -zone.getBoundingClientRect().top / distance));
+    const rect = zone.getBoundingClientRect();
+    const range = Math.max(1, rect.height - vh);
+    return Math.max(0, Math.min(1, -rect.top / range));
   }
 
-  function request() {
-    if (!destroyed && !raf) raf = requestAnimationFrame(update);
+  function show(index) {
+    if (destroyed || index === displayed) return;
+    const image = cache.get(index);
+    if (!image || !image.complete || !image.naturalWidth) return;
+    // This URL has already loaded in Image(), so the browser reuses it rather
+    // than waiting for another network response.
+    activeImage.src = image.src;
+    activeImage.style.opacity = "1";
+    displayed = index;
   }
 
-  function resizeCanvas() {
-    const w = Math.max(1, stage.clientWidth);
-    const h = Math.max(1, stage.clientHeight);
-    // Cap canvas memory even on Retina displays.
-    const scale = Math.min(2, 1920 / w, 1080 / h);
-    const cw = Math.max(1, Math.floor(w * scale));
-    const ch = Math.max(1, Math.floor(h * scale));
-    if (cw !== pixelW || ch !== pixelH) {
-      pixelW = cw; pixelH = ch;
-      canvas.width = cw;
-      canvas.height = ch;
-      shown = -1;
-      if (displayedImage?.complete && displayedImage.naturalWidth) {
-        paint(displayedImage);
-      }
-    }
+  function prune() {
+    if (cache.size <= maxCached) return;
+    const removals = [...cache.keys()]
+      .filter(i => i !== displayed)
+      .sort((a,b) => Math.abs(b-requested) - Math.abs(a-requested));
+    while (cache.size > maxCached && removals.length) cache.delete(removals.shift());
   }
 
-  function paint(img) {
-    if (!ctx || !img || !img.naturalWidth) return false;
-    try {
-      resizeCanvasDimensionsIfNeeded();
-      const width = canvas.width, height = canvas.height;
-      const sourceW = img.naturalWidth, sourceH = img.naturalHeight;
-      const scale = Math.max(width/sourceW,height/sourceH);
-      const cropW = width/scale, cropH = height/scale;
-      const posX = window.innerWidth <= 760 ? 0.49 : 0.5;
-      const cropX = Math.max(0,Math.min(sourceW-cropW,(sourceW-cropW)*posX));
-      const cropY = (sourceH-cropH)*0.5;
-      ctx.clearRect(0,0,width,height);
-      ctx.drawImage(img,cropX,cropY,cropW,cropH,0,0,width,height);
-      canvas.style.opacity = "1";
-      displayedImage = img;
-      return true;
-    } catch {
-      return false; // Poster always remains visible, even if drawing fails.
-    }
-  }
-
-  function resizeCanvasDimensionsIfNeeded() {
-    const w = Math.max(1,stage.clientWidth), h = Math.max(1,stage.clientHeight);
-    const scale = Math.min(2,1920/w,1080/h);
-    const cw = Math.max(1,Math.floor(w*scale));
-    const ch = Math.max(1,Math.floor(h*scale));
-    if (cw !== pixelW || ch !== pixelH) {
-      pixelW = cw; pixelH = ch;
-      canvas.width = cw;
-      canvas.height = ch;
-      shown = -1;
-    }
-  }
-
-  function trimCache() {
-    if (cache.size <= cacheLimit) return;
-    const removable = Array.from(cache.entries())
-      .filter(([index,entry]) => entry.state !== "loading" && index !== shown)
-      .sort((a,b) => Math.abs(b[0]-desired)-Math.abs(a[0]-desired));
-    for (const [index] of removable) {
-      if (cache.size <= cacheLimit) break;
-      cache.delete(index);
-    }
-  }
-
-  function load(index) {
-    if (destroyed || cache.has(index) || failed.has(index)) return;
-    const img = new Image();
-    let usingFallback = lowQuality;
-    const entry = { img, src:path(index), state:"loading" };
-    cache.set(index, entry);
-    inflight++;
-
-    img.onload = () => {
-      if (destroyed || cache.get(index) !== entry) return;
-      entry.state = "ready";
-      inflight--;
-      request();
+  function request(index) {
+    if (destroyed || motionReduce || index < 0 || index >= SCROLL_FRAMES) return;
+    if (cache.has(index) || loading.has(index)) return;
+    if (failures.get(index) > Date.now() - 12000) return;
+    const image = new Image();
+    let useFallback = lowQuality;
+    const task = { image, src: path(index) };
+    loading.set(index, task);
+    image.onload = () => {
+      if (destroyed || loading.get(index) !== task) return;
+      loading.delete(index);
+      cache.set(index, image);
+      failures.delete(index);
+      prune();
+      // Render only what scroll is currently asking for. Stale responses must
+      // never force a jump backwards when the visitor scrolls rapidly.
+      if (index === requested || displayed === -1) show(index);
+      updateFrame();
       schedule();
     };
-
-    img.onerror = () => {
-      if (destroyed || cache.get(index) !== entry) return;
-      if (!usingFallback) {
-        usingFallback = true;
-        entry.src = fallbackPath(index);
-        img.src = entry.src;
+    image.onerror = () => {
+      if (destroyed || loading.get(index) !== task) return;
+      if (!useFallback) {
+        useFallback = true;
+        task.src = fallbackPath(index);
+        image.src = task.src;
         return;
       }
-      entry.state = "failed";
-      inflight--;
-      failed.add(index);
-      if (failed.size >= 3 && !degraded) {
-        degraded = true;
-        zone.classList.add("ew-scroll-degraded");
-        tell("La animación está limitada en esta conexión. Puedes continuar o saltarla.");
-      }
-      request();
+      loading.delete(index);
+      failures.set(index, Date.now());
+      loadErrors++;
+      if (loadErrors >= 4) message("Conexión lenta: las imágenes se cargarán a medida que avances.");
       schedule();
     };
-    img.src = entry.src;
+    image.decoding = "async";
+    image.src = task.src;
   }
 
   function schedule() {
-    if (destroyed || reduced) return;
-    // A small neighborhood is enough: never start all sixty downloads.
-    const priority = [desired];
-    for (let k=1;k<=2;k++) {
-      if (desired+k<SCROLL_FRAMES) priority.push(desired+k);
-      if (desired-k>=0) priority.push(desired-k);
+    if (destroyed || motionReduce) return;
+    // Prioritize the exact scroll position. A browser refresh at the end of
+    // the page must request frame 60 instead of only frame 1.
+    const order = [requested];
+    for (let d=1;d<=3;d++) {
+      if (requested+d<SCROLL_FRAMES) order.push(requested+d);
+      if (requested-d>=0) order.push(requested-d);
     }
-    for (const index of priority) {
-      if (inflight >= maxInFlight) break;
-      if (!cache.has(index) && !failed.has(index)) load(index);
+    for (const index of order) {
+      if (loading.size >= maxRequests) break;
+      request(index);
     }
-    trimCache();
+  }
+
+  function updateFrame() {
+    if (cache.has(requested)) {
+      show(requested);
+      return;
+    }
+    // If the target image has not arrived, keep the current frame; on initial
+    // load, show the closest available one. Never blank the layer while waiting.
+    if (displayed >= 0) return;
+    for (let d=1;d<SCROLL_FRAMES;d++) {
+      const back = requested-d, ahead=requested+d;
+      if (back>=0 && cache.has(back)) { show(back); return; }
+      if (ahead<SCROLL_FRAMES && cache.has(ahead)) { show(ahead); return; }
+    }
   }
 
   function update() {
-    raf=0;
+    raf = 0;
     if (destroyed) return;
     const p = progress();
-    desired = Math.round(p * (SCROLL_FRAMES - 1));
-
-    if (!reduced) {
-      let choice = cache.get(desired)?.state === "ready" ? desired : -1;
-      // Display a nearby fully loaded image, otherwise retain the last canvas
-      // frame or poster. A failed network request cannot erase the screen.
-      for (let d=1;choice<0 && d<=3;d++) {
-        for (const i of [desired-d,desired+d]) {
-          if (i >= 0 && i < SCROLL_FRAMES && cache.get(i)?.state === "ready") {
-            choice = i; break;
-          }
-        }
-      }
-      if (choice !== -1 && choice !== shown) {
-        const entry = cache.get(choice);
-        if (paint(entry.img)) shown = choice;
-      }
+    requested = Math.round(p*(SCROLL_FRAMES-1));
+    if (!motionReduce) {
+      updateFrame();
       schedule();
     }
 
     if (bar) bar.style.transform = "scaleY(" + p + ")";
-    if (counter) counter.textContent = String(desired+1).padStart(2,"0") + " / " + SCROLL_FRAMES;
+    if (count) count.textContent = String(requested+1).padStart(2,"0") + " / " + SCROLL_FRAMES;
     const introAlpha = Math.max(0,Math.min(1,(.22-p)/.16));
     if (intro) {
       intro.style.opacity = String(introAlpha);
       intro.style.visibility = introAlpha < .02 ? "hidden" : "visible";
     }
     for (const card of stories) {
-      const a=Number(card.dataset.start), b=Number(card.dataset.end);
-      // Keep the final CTA visible at the end of the scroll.
-      const fadeOut = b >= 1 ? 1 : (b-p)/.035;
-      const visible=Math.max(0,Math.min(1,(p-a)/.035,fadeOut));
-      card.style.opacity = String(visible);
-      card.style.visibility = visible < .02 ? "hidden" : "visible";
-      card.style.transform = "translateY(" + Math.round((1-visible)*18) + "px)";
-      card.style.pointerEvents = visible > .8 ? "auto" : "none";
+      const start=Number(card.dataset.start), end=Number(card.dataset.end);
+      const fadeOut = end >= 1 ? 1 : (end-p)/.035;
+      const visible=Math.max(0,Math.min(1,(p-start)/.035,fadeOut));
+      card.style.opacity=String(visible);
+      card.style.visibility=visible<.02?"hidden":"visible";
+      card.style.transform="translateY(" + Math.round((1-visible)*18) + "px)";
+      card.style.pointerEvents=visible>.8?"auto":"none";
     }
   }
 
-  // Start with only two requests and update priorities on every scroll.
-  // No IntersectionObserver gate: Safari can miss initial events near sticky sections.
-  if (!reduced) schedule();
-  window.addEventListener("scroll",request,{passive:true,signal});
-  window.addEventListener("resize",() => {
-    resizeCanvas();
-    request();
-  },{passive:true,signal});
-  window.addEventListener("orientationchange",request,{passive:true,signal});
-  resizeCanvas();
-  request();
+  function tick() {
+    if (!destroyed && !raf) raf=requestAnimationFrame(update);
+  }
 
-  teardown = () => {
-    destroyed = true;
-    abort.abort();
+  window.addEventListener("scroll",tick,{passive:true,signal:controller.signal});
+  window.addEventListener("resize",tick,{passive:true,signal:controller.signal});
+  window.addEventListener("orientationchange",tick,{passive:true,signal:controller.signal});
+  // Safari/Chrome sometimes restore scroll after the first paint; monitor it
+  // again when the page is restored from back-forward cache.
+  window.addEventListener("pageshow",tick,{passive:true,signal:controller.signal});
+  // A reload should begin at frame 001, not at an old scroll position from
+  // browser restoration (seen on desktop Chrome). Normal navigation is kept.
+  if (performance.getEntriesByType?.("navigation")?.[0]?.type === "reload"
+      && (location.hash === "" || location.hash === "#/")) {
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    window.scrollTo({top:0,left:0,behavior:"instant"});
+    window.setTimeout(() => {
+      if (!destroyed) { window.scrollTo(0,0); tick(); }
+    }, 70);
+  }
+  tick();
+
+  teardown=()=>{
+    destroyed=true;
+    controller.abort();
     if (raf) cancelAnimationFrame(raf);
-    for (const entry of cache.values()) {
-      entry.img.onload=null;
-      entry.img.onerror=null;
+    for (const task of loading.values()) {
+      task.image.onload=null;task.image.onerror=null;
     }
-    cache.clear();
+    loading.clear();cache.clear();
   };
 }

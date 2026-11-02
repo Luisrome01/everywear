@@ -45,17 +45,8 @@
 }
 
 
-/* Scrolling never depends on frames or network. The skip control is always usable. */
-.ew-scroll-skip{
-  position:absolute;z-index:6;bottom:26px;left:clamp(22px,4vw,60px);
-  display:inline-flex;align-items:center;gap:11px;padding:12px 15px;
-  border:1px solid rgba(122,51,64,.35);border-radius:2px;
-  background:rgba(250,244,232,.88);color:#75303e;
-  font:600 10px var(--sans,sans-serif);letter-spacing:.1em;text-transform:uppercase;
-  cursor:pointer;backdrop-filter:blur(8px);
-}
-.ew-scroll-skip:hover{background:#fff9ee}
-.ew-scroll-skip:focus-visible{outline:2px solid #75303e;outline-offset:3px}
+/* Scrolling never depends on frames or network. */
+
 .ew-scroll-load-status{
   position:absolute;z-index:6;bottom:82px;left:clamp(22px,4vw,60px);
   max-width:min(320px,85%);padding:8px 12px;background:rgba(250,244,232,.91);
@@ -63,9 +54,9 @@
 }
 .ew-scroll-load-status[hidden]{display:none}
 @media(max-width:760px){
- .ew-scroll-skip{left:18px;bottom:12px;padding:10px 11px;font-size:9px}
+
  .ew-scroll-load-status{left:18px;bottom:55px;max-width:75%;font-size:11px}
- .ew-scroll-progress{right:12px;bottom:53px}
+ .ew-scroll-progress{right:12px;bottom:13px}
 }
 @media(prefers-reduced-motion:reduce){
  .ew-scroll-zone{height:100svh;min-height:550px}
@@ -73,13 +64,11 @@
  .ew-scroll-story{display:none}
 }
 
-/* Permanent low-bandwidth fallback with a separate draw surface. */
-.ew-scroll-canvas{
+/* Poster remains visible and the animated image sits above it. */
+.ew-scroll-animated {
   position:absolute;inset:0;width:100%;height:100%;
-  display:block;pointer-events:none;opacity:0;
+  display:block;object-fit:cover;object-position:center center;
+  opacity:0;user-select:none;-webkit-user-drag:none;pointer-events:none;
 }
+@media(max-width:760px){.ew-scroll-animated{object-position:49% center}}
 .ew-scroll-stage{background:#f8f1e6 url("/brand/girl-bag.webp") center center / cover no-repeat}
-.ew-scroll-degraded{height:150svh;min-height:950px}
-@media(max-width:760px){
- .ew-scroll-degraded{height:145svh;min-height:800px}
-}
