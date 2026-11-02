@@ -72,3 +72,84 @@
 }
 @media(max-width:760px){.ew-scroll-animated{object-position:49% center}}
 .ew-scroll-stage{background:#f8f1e6 url("/brand/girl-bag.webp") center center / cover no-repeat}
+
+
+/* Everywear editorial preloader — only the video-scroll-test Home. */
+body.ew-is-loading { overflow:hidden !important; }
+.ew-boot {
+  position:fixed;inset:0;z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+  background:#f7efdf;color:#3f332a;
+  padding:30px 22px;min-height:100dvh;
+  opacity:1;visibility:visible;transition:opacity .4s ease,visibility .4s ease;
+}
+.ew-boot[hidden] {display:none!important}
+.ew-boot.ew-boot-exit {opacity:0;visibility:hidden;pointer-events:none}
+.ew-boot::before {
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 45%,rgba(235,206,182,.24),transparent 55%);
+}
+.ew-boot-content {width:min(410px,100%);position:relative;text-align:center}
+.ew-boot-edition {
+  display:block;font-size:10px;font-weight:600;letter-spacing:.25em;
+  color:#7f4b4f;margin-bottom:25px;
+}
+.ew-boot-brand {
+  display:flex;align-items:baseline;justify-content:center;
+  color:#687057;white-space:nowrap;line-height:1;
+}
+.ew-boot-brand>span {
+  font:300 clamp(60px,12vw,90px)/1 "Jost",sans-serif;
+  letter-spacing:-.095em;
+}
+.ew-boot-brand>em {
+  font:normal clamp(79px,15vw,115px)/.7 "Italianno",cursive;
+  transform:translate(-4px,7px);letter-spacing:-.06em;
+}
+.ew-boot-star {
+  display:block;font:normal 30px Georgia,serif;color:#843447;
+  margin:28px auto 20px;line-height:1;
+}
+.ew-boot-message {
+  font:400 clamp(18px,3.5vw,24px)/1.35 var(--serif,Georgia,serif);
+  letter-spacing:-.025em;color:#4d3c35;margin:0 0 32px;
+}
+.ew-boot-line {
+  position:relative;height:2px;width:100%;
+  background:#d9c7b5;overflow:hidden;
+}
+.ew-boot-line>span {
+  position:absolute;inset:0 auto 0 0;width:0;
+  background:#7f3144;transition:width .2s ease;
+}
+.ew-boot-detail {
+  display:flex;justify-content:space-between;align-items:center;
+  gap:16px;margin-top:12px;font-size:10px;letter-spacing:.13em;
+  color:#857567;text-transform:uppercase;
+}
+.ew-boot-detail #ew-boot-status {text-align:left}
+.ew-boot-detail #ew-boot-percent {
+  font-variant-numeric:tabular-nums;color:#7c3041;
+  font-weight:600;min-width:35px;text-align:right;
+}
+.ew-boot-continue {
+  margin-top:29px;background:transparent;color:#7a3141;
+  border:1px solid #a97a78;padding:12px 18px;
+  text-transform:uppercase;font-size:10px;font-weight:600;letter-spacing:.16em;
+  cursor:pointer;
+}
+.ew-boot-continue:hover {background:#f0e3d5}
+.ew-boot-continue[hidden] {display:none!important}
+.ew-boot-bottom {
+  position:absolute;bottom:clamp(20px,5vh,48px);left:16px;right:16px;
+  text-align:center;color:#998979;font-size:9px;letter-spacing:.2em;
+}
+@media(max-width:760px) {
+  .ew-boot-content {max-width:320px}
+  .ew-boot-edition {font-size:9px}
+  .ew-boot-detail {font-size:9px}
+  .ew-boot-message {margin-bottom:26px}
+}
+@media(prefers-reduced-motion:reduce){
+  .ew-boot,.ew-boot-line>span {transition:none}
+}

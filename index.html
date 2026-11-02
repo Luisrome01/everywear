@@ -1,6 +1,12 @@
 <!doctype html>
 <html lang="es">
   <head>
+    <script>
+      // Prevent browsers from restoring the test Home at frame 60 after reload.
+      if (!location.hash || location.hash === "#/") {
+        try { history.scrollRestoration = "manual"; } catch (e) {}
+      }
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f6edda" />

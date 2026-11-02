@@ -11,10 +11,13 @@ const outputDir = resolve("public/scroll-frames-hd");
 await mkdir(outputDir, { recursive: true });
 
 const rows = [];
+const hdFrames = [];
+const originalFrames = [];
 let totalBytes = 0;
 for (let frameNumber = 1; frameNumber <= 60; frameNumber++) {
   const filename = `frame_${String(frameNumber).padStart(3, "0")}.webp`;
   const source = await readFile(join(inputDir, filename));
+  originalFrames.push(source);
   const original = await sharp(source).metadata();
 
   if (original.width !== 1280 || original.height !== 720) {
@@ -31,9 +34,24 @@ for (let frameNumber = 1; frameNumber <= 60; frameNumber++) {
     .toBuffer();
 
   await writeFile(join(outputDir, filename), enhanced);
+  hdFrames.push(enhanced);
   totalBytes += enhanced.length;
   rows.push({ file: filename, width: 1920, height: 1080, size: enhanced.length });
 }
+
+// One HTTP request for the complete frame set, rather than 60 requests.
+// E W F R + uint32 number of frames + uint32 size per frame + WebP bytes.
+function packSequence(buffers) {
+  const header = Buffer.alloc(8 + buffers.length * 4);
+  header.write("EWFR", 0, "ascii");
+  header.writeUInt32LE(buffers.length, 4);
+  buffers.forEach((buffer, i) => header.writeUInt32LE(buffer.length, 8 + i * 4));
+  return Buffer.concat([header, ...buffers]);
+}
+await Promise.all([
+  writeFile(join(outputDir, "sequence.pack"), packSequence(hdFrames)),
+  writeFile(join(inputDir, "sequence.pack"), packSequence(originalFrames))
+]);
 
 await writeFile(join(outputDir, "manifest.json"), JSON.stringify({
   origin: "Everywear scroll video, sampled from original 720p frames",
