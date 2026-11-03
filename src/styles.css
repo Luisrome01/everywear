@@ -668,3 +668,23 @@ button, a, input, select {
 @supports not (overflow: clip) {
   html, body, #app { overflow-x: hidden; }
 }
+
+
+/* Lookbook HD: on phones the editorial spreads should fill the viewer, not
+   inherit the small 36vw cap used for low-resolution screenshots. */
+@media (max-width: 760px) {
+  .lookbook-viewport {
+    height: clamp(320px, 94vw, 520px);
+  }
+  .lookbook-slide {
+    padding: clamp(6px, 1.8vw, 12px);
+  }
+  .lookbook-slide img {
+    width: auto;
+    max-width: 100%;
+    max-height: 100%;
+    height: auto;
+    object-fit: contain;
+    filter: none;
+  }
+}
