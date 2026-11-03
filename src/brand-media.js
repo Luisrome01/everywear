@@ -3,6 +3,8 @@ export const BRAND_MEDIA = {
   bag: "/brand/bag.webp",
   store: "/brand/store.webp",
   girlBag: "/brand/girl-bag.webp",
+  oliveBag: "/brand/bag-olive.webp",
+  girlRedBag: "/brand/girl-red-bag.webp",
   book1: "/brand/lookbook-01.webp",
   book2: "/brand/lookbook-02.webp",
   book3: "/brand/lookbook-03.webp",

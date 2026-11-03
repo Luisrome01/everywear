@@ -172,8 +172,8 @@ function home() {
           </div>
           <div class="brand-collage" aria-label="Imágenes de identidad visual de Everywear">
             <figure class="collage-photo collage-store"><img src="${BRAND_MEDIA.store}" alt="Fachada de la boutique Everywear, con vitrinas y letrero de la marca" loading="lazy" /><figcaption>01 / OUR SPACE</figcaption></figure>
-            <figure class="collage-photo collage-bag"><img src="${BRAND_MEDIA.bag}" alt="Bolsa beige vainilla Everywear con su identidad gráfica" loading="lazy" /><figcaption>02 / OUR DETAILS</figcaption></figure>
-            <figure class="collage-photo collage-girl"><img src="${BRAND_MEDIA.girlBag}" alt="Modelo sosteniendo una bolsa de gran formato Everywear" loading="lazy" /><figcaption>03 / OUR STYLE</figcaption></figure>
+            <figure class="collage-photo collage-bag"><img src="${BRAND_MEDIA.oliveBag}" alt="Bolsa verde oliva Everywear de la nueva colección, con identidad gráfica beige" loading="lazy" /><figcaption>02 / OUR DETAILS</figcaption></figure>
+            <figure class="collage-photo collage-girl"><img src="${BRAND_MEDIA.girlRedBag}" alt="Modelo de perfil sosteniendo la bolsa vino de la nueva colección Everywear" loading="lazy" /><figcaption>03 / OUR STYLE</figcaption></figure>
           </div>
         </div>
       </section>

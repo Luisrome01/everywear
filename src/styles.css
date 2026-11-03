@@ -400,6 +400,9 @@ h1, h2, h3, p { margin-top: 0; }
 .collage-bag img{object-position:center 46%}
 .collage-girl{grid-column:2;grid-row:1 / span 2}
 .collage-girl img{object-position:center 23%}
+/* New collection images: preserve full bag and full-body outfit on all screens. */
+.collage-bag img{object-fit:contain;background:#d9cab9}
+.collage-girl img{object-fit:contain;background:#f8f8f8}
 .lookbook-section{background:#e5d8c3;padding:95px clamp(24px,6vw,95px) 65px;overflow:hidden}
 .lookbook-shell{max-width:1330px;margin:0 auto}
 .lookbook-header{display:flex;align-items:end;justify-content:space-between;gap:24px;margin:39px 0 36px}
