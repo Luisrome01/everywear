@@ -189,7 +189,7 @@ function home() {
             <div class="lookbook-viewer">
               <div class="lookbook-viewport" role="region" aria-roledescription="carrusel" aria-label="Lookbook fotográfico Everywear" tabindex="0">
                 <div class="lookbook-track" id="lookbook-track" style="transform:translate3d(-${state.lookbookIndex * 100}%,0,0)">
-                  ${LOOKBOOK_SLIDES.map((slide,i)=>`<div class="lookbook-slide" role="group" aria-roledescription="diapositiva" aria-label="${i+1} de ${LOOKBOOK_SLIDES.length}"><img src="${slide.image}" loading="${i===0 ? "eager" : "lazy"}" alt="${["Escena urbana frente a Zara y editorial Everywear","Prendas y gorra verde oliva del lookbook Everywear","Look urbano femenino con abrigo oscuro","Editorial con logotipo Everywear y bolsa de gran formato","Look con gafas de sol y detalle de denim","Fotografía de la campaña Go Follow Everywear"][i]}" draggable="false" /></div>`).join("")}
+                  ${LOOKBOOK_SLIDES.map((slide,i)=>`<div class="lookbook-slide" role="group" aria-roledescription="diapositiva" aria-label="${i+1} de ${LOOKBOOK_SLIDES.length}"><img src="${slide.image}" loading="${i===0 ? "eager" : "lazy"}" alt="${slide.alt}" width="1254" height="1254" decoding="async" draggable="false" /></div>`).join("")}
                 </div>
               </div>
               <div class="lookbook-navigation">
