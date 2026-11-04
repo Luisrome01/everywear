@@ -26,74 +26,186 @@ let teardown = null;
 export function initScrollHero() {
   if (teardown) { teardown(); teardown = null; }
   const zone = document.getElementById('everywear-scroll-experience');
-  const frame = document.getElementById('ew-scroll-frame');
-  if (!zone || !frame) return;
+  let frame = document.getElementById('ew-scroll-frame');
+  const stage = document.getElementById('ew-scroll-stage');
+  if (!zone || !frame || !stage) return;
+
   const intro = document.getElementById('ew-scroll-intro');
   const stories = [...zone.querySelectorAll('.ew-scroll-story')];
   const bar = document.getElementById('ew-scroll-progress-fill');
   const images = Array.from({length: SCROLL_FRAMES}, (_, i) => path(i));
-  const ready = new Uint8Array(SCROLL_FRAMES);
-  ready[0] = frame.complete && frame.naturalWidth > 0 ? 1 : 0;
-  let active = -1, desired = 0, frameRaf = 0, destroyed = false;
-  let loading = 0, nextPreload = 1;
+  const mobile = window.matchMedia('(max-width: 760px)').matches;
+  const maxDecoded = mobile ? 7 : 13;
+  const maxParallel = mobile ? 2 : 3;
+  const decoded = new Map();
+  const pending = new Map();
+  const failed = new Set();
   const abort = new AbortController();
   const {signal} = abort;
-  // Limited concurrency keeps mobile networks responsive.
-  const preload = index => new Promise(resolve => {
-    const img = new Image();
-    img.onload = async () => { try { if (img.decode) await img.decode(); } catch {} ready[index] = 1; resolve(); requestTick(); };
-    img.onerror = () => resolve();
-    img.src = images[index];
-    if (img.complete && img.naturalWidth > 0) img.onload();
-  });
-  const queue = () => {
-    while (!destroyed && loading < 4 && nextPreload < SCROLL_FRAMES) {
-      const i = nextPreload++; loading++;
-      preload(i).finally(() => {loading--;queue();});
-    }
-  };
-  // Start loading frames only as the user approaches the scene.
-  const watcher = new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting) { queue(); watcher.disconnect(); }
-  }, {rootMargin: '1000px 0px'});
-  watcher.observe(zone);
-  frame.addEventListener('load', () => { ready[0] = 1; requestTick(); }, {signal});
-  function progress() {
-    // Use the stable layout viewport rather than visualViewport (Safari toolbars).
-    const vh = window.innerHeight || document.documentElement.clientHeight;
-    const offset = zone.getBoundingClientRect().top;
-    const distance = Math.max(1, zone.offsetHeight - vh);
-    return Math.max(0, Math.min(1, -offset / distance));
+  let active = -1, desired = 0, lastScrollY = 0, lastWidth = window.innerWidth;
+  let frameRaf = 0, destroyed = false;
+  let sceneStart = 0, sceneDistance = 1;
+
+  // Telegram's in-app WebView animates its browser chrome, changing innerHeight
+  // during touch scrolling. Freeze the document-space scene geometry instead
+  // of mapping frames against an unstable live viewport height.
+  function scrollY() {
+    return Math.max(0, window.scrollY ?? document.documentElement.scrollTop ?? 0);
   }
-  function nearest(index) {
-    if (ready[index]) return index;
-    for (let k=1;k<SCROLL_FRAMES;k++) {
-      if (index-k>=0 && ready[index-k]) return index-k;
-      if (index+k<SCROLL_FRAMES && ready[index+k]) return index+k;
+  function refreshGeometry() {
+    const currentScroll = scrollY();
+    sceneStart = currentScroll + zone.getBoundingClientRect().top;
+    const stickyTop = Number.parseFloat(getComputedStyle(stage).top) || 0;
+    const stableHeight = stage.offsetHeight + stickyTop;
+    sceneDistance = Math.max(1, zone.offsetHeight - stableHeight);
+    lastWidth = window.innerWidth;
+  }
+  function progress() {
+    return Math.max(0, Math.min(1, (scrollY() - sceneStart) / sceneDistance));
+  }
+
+  const warmed = window.__EW_WARM_IMAGES || [];
+  for (let i = 0; i < Math.min(SCROLL_FRAMES, 9); i++) {
+    const image = warmed.find(img => img?.src === images[i] && img.complete && img.naturalWidth);
+    if (image) decoded.set(i, image);
+  }
+  if (frame.complete && frame.naturalWidth) decoded.set(0, frame);
+  frame.addEventListener('load', () => {
+    if (!destroyed && frame.src === images[0] && frame.naturalWidth) {
+      decoded.set(0, frame);
+      requestTick();
+    }
+  }, {signal});
+
+  function trim() {
+    if (decoded.size <= maxDecoded) return;
+    const removable = [...decoded.keys()]
+      .filter(i => i !== active)
+      .sort((a,b) => Math.abs(b-desired) - Math.abs(a-desired));
+    for (const i of removable) {
+      if (decoded.size <= maxDecoded) break;
+      decoded.delete(i);
+    }
+  }
+  function requestImage(i) {
+    if (destroyed || i < 0 || i >= SCROLL_FRAMES ||
+        decoded.has(i) || pending.has(i) || failed.has(i)) return;
+    const img = new Image();
+    pending.set(i,img);
+    let complete = false;
+    async function finish(ok) {
+      if (complete) return;
+      complete = true;
+      if (ok && img.naturalWidth && typeof img.decode === 'function') {
+        try { await img.decode(); } catch { /* use the loaded image anyway */ }
+      }
+      pending.delete(i);
+      img.onload = null;
+      img.onerror = null;
+      if (destroyed) return;
+      if (ok && img.naturalWidth) decoded.set(i, img);
+      else failed.add(i);
+      trim();
+      requestTick();
+      schedule();
+    }
+    img.decoding = 'async';
+    img.onload = () => { void finish(true); };
+    img.onerror = () => { void finish(false); };
+    img.src = images[i];
+    if (img.complete && img.naturalWidth) void finish(true);
+  }
+  function schedule() {
+    if (destroyed) return;
+    // Warm only a small moving neighborhood. Never decode all 97 frames in a
+    // single uninterrupted queue, which causes WKWebView memory/scroll stalls.
+    const direction = scrollY() >= lastScrollY ? 1 : -1;
+    const candidates = [desired];
+    for (let n=1;n<=4;n++) {
+      candidates.push(desired + n * direction, desired - n * direction);
+    }
+    for (const i of candidates) {
+      if (pending.size >= maxParallel) break;
+      requestImage(i);
+    }
+    trim();
+  }
+  function closestReady(index) {
+    if (decoded.has(index)) return index;
+    // Preserve the current image until the requested image is decoded.
+    if (active >= 0) return active;
+    for (let d=1;d<SCROLL_FRAMES;d++) {
+      if (decoded.has(index-d)) return index-d;
+      if (decoded.has(index+d)) return index+d;
     }
     return -1;
   }
   function render() {
-    frameRaf=0; if(destroyed) return;
-    const p=progress(); desired=Math.round(p*(SCROLL_FRAMES-1));
-    const index=nearest(desired);
-    if(index>=0 && index!==active){ active=index; frame.src=images[index]; }
-    if(bar) bar.style.transform=`scaleY(${p})`;
-    const introAlpha=Math.max(0,Math.min(1,(.22-p)/.16));
-    if(intro){intro.style.opacity=String(introAlpha);intro.style.visibility=introAlpha<.02?'hidden':'visible';}
-    for (const c of stories) {
-      const a=Number(c.dataset.start),b=Number(c.dataset.end);
-      const visible=Math.max(0,Math.min(1,(p-a)/.035,(b-p)/.035));
-      c.style.opacity=String(visible);
-      c.style.visibility=visible<.02?'hidden':'visible';
-      c.style.transform=`translateY(${Math.round((1-visible)*18)}px)`;
-      c.style.pointerEvents=visible>.8?'auto':'none';
+    frameRaf = 0;
+    if (destroyed) return;
+    const p = progress();
+    desired = Math.round(p * (SCROLL_FRAMES - 1));
+    const index = closestReady(desired);
+    if (index >= 0 && index !== active) {
+      // Reuse a fully loaded image element instead of assigning its URL to
+      // another img, which would force repeated decoding during quick swipes.
+      const replacement = decoded.get(index);
+      if (replacement && replacement !== frame) {
+        frame.removeAttribute('id');
+        frame.removeAttribute('class');
+        replacement.id = 'ew-scroll-frame';
+        replacement.className = 'ew-scroll-frame';
+        replacement.alt = 'Modelo de Everywear caminando con bolsa de la marca';
+        replacement.draggable = false;
+        frame.replaceWith(replacement);
+        frame = replacement;
+      }
+      active = index;
     }
+    if (bar) bar.style.transform = 'scaleY(' + p + ')';
+    const introAlpha = Math.max(0, Math.min(1, (.22-p)/.16));
+    if (intro) {
+      intro.style.opacity = String(introAlpha);
+      intro.style.visibility = introAlpha < .02 ? 'hidden' : 'visible';
+    }
+    for (const card of stories) {
+      const a = Number(card.dataset.start), b = Number(card.dataset.end);
+      const fadeOut = b >= 1 ? 1 : (b-p)/.035;
+      const visible = Math.max(0, Math.min(1, (p-a)/.035, fadeOut));
+      card.style.opacity = String(visible);
+      card.style.visibility = visible < .02 ? 'hidden' : 'visible';
+      card.style.transform = 'translateY(' + Math.round((1-visible)*18) + 'px)';
+      card.style.pointerEvents = visible > .8 ? 'auto' : 'none';
+    }
+    schedule();
+    lastScrollY = scrollY();
   }
-  function requestTick(){if(!frameRaf&&!destroyed)frameRaf=requestAnimationFrame(render);}
-  window.addEventListener('scroll',requestTick,{passive:true,signal});
-  window.addEventListener('resize',requestTick,{passive:true,signal});
-  window.addEventListener('orientationchange',requestTick,{passive:true,signal});
+  function requestTick() {
+    if (!destroyed && !frameRaf) frameRaf = requestAnimationFrame(render);
+  }
+  function onResize() {
+    // Ignore toolbar-only height changes; a rotation/width change is real.
+    if (Math.abs(window.innerWidth - lastWidth) > 2) refreshGeometry();
+    requestTick();
+  }
+  refreshGeometry();
+  window.addEventListener('scroll', requestTick, {passive:true,signal});
+  window.addEventListener('resize', onResize, {passive:true,signal});
+  window.addEventListener('orientationchange', () => {
+    refreshGeometry();
+    requestTick();
+  }, {passive:true,signal});
+  window.addEventListener('pageshow', requestTick, {passive:true,signal});
   requestTick();
-  teardown=() => {destroyed=true;abort.abort();watcher.disconnect();if(frameRaf)cancelAnimationFrame(frameRaf);};
+  teardown = () => {
+    destroyed = true;
+    abort.abort();
+    if (frameRaf) cancelAnimationFrame(frameRaf);
+    for (const img of pending.values()) {
+      img.onload = null;
+      img.onerror = null;
+    }
+    pending.clear();
+    decoded.clear();
+  };
 }
