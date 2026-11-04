@@ -31,6 +31,37 @@ requestAnimationFrame(animateProgress);
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const homeEntry = !location.hash || location.hash === "#/";
 
+// Some iOS in-app WebViews (including Telegram) ignore overflow:hidden while
+// the loader covers a scrollable document. Suppress gestures only during the
+// loading curtain; these listeners are all removed once it has disappeared.
+let entryLocked = true;
+function preventLoadingGesture(event) {
+  if (entryLocked && event.cancelable) event.preventDefault();
+}
+function preventLoadingKeys(event) {
+  if (entryLocked && ["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "].includes(event.key)) {
+    event.preventDefault();
+  }
+}
+function keepLoadingAtTop() {
+  if (entryLocked && homeEntry && window.scrollY > 0) window.scrollTo(0, 0);
+}
+document.addEventListener("touchmove", preventLoadingGesture, { capture: true, passive: false });
+document.addEventListener("wheel", preventLoadingGesture, { capture: true, passive: false });
+window.addEventListener("keydown", preventLoadingKeys, { capture: true });
+window.addEventListener("scroll", keepLoadingAtTop, { passive: true });
+
+function releaseLoadingLock() {
+  if (!entryLocked) return;
+  entryLocked = false;
+  document.removeEventListener("touchmove", preventLoadingGesture, true);
+  document.removeEventListener("wheel", preventLoadingGesture, true);
+  window.removeEventListener("keydown", preventLoadingKeys, true);
+  window.removeEventListener("scroll", keepLoadingAtTop);
+  document.documentElement.classList.remove("ew-entry-locked");
+  document.body.classList.remove("ew-entry-locked");
+}
+
 function startAtTop() {
   if (!homeEntry) return;
   try { history.scrollRestoration = "manual"; } catch {}
@@ -186,7 +217,8 @@ async function enter() {
   curtain?.classList.add("ew-entry-leaving");
   await sleep(EXIT_MS);
   curtain?.remove();
-  document.body.classList.remove("ew-entry-locked");
+  startAtTop();
+  releaseLoadingLock();
   startAtTop();
   // Recheck scroll restoration after the browser's first layout.
   requestAnimationFrame(() => {

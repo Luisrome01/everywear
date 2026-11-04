@@ -4,6 +4,7 @@
     <script>
       // Disable browser restoration before scripts mount the Home.
       window.__EW_ENTRY_START = performance.now();
+      document.documentElement.classList.add("ew-entry-locked");
       try { history.scrollRestoration = "manual"; } catch (e) {}
     </script>
     <meta charset="UTF-8" />
@@ -17,12 +18,27 @@
     <style>
       /* Critical above-the-fold loader. Inline to avoid a blank flash on repeat visits. */
       html { background:#f5ecd6; }
-      body.ew-entry-locked { overflow:hidden!important; }
+      /* Freeze the document, not just the body overflow: iOS webviews can scroll
+         behind a fixed overlay when only overflow:hidden is used. */
+      html.ew-entry-locked {
+        overflow: hidden !important;
+        overscroll-behavior: none;
+        scroll-behavior: auto !important;
+      }
+      body.ew-entry-locked {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        overscroll-behavior: none;
+        touch-action: none;
+      }
       .ew-entry-curtain {
         position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;
         min-height:100dvh;padding:24px;background:#f5ecd6;color:#7a8061;
         box-sizing:border-box;box-shadow:0 9px 26px rgba(74,55,43,.08);
-        transform:translate3d(0,0,0);
+        transform:translate3d(0,0,0);touch-action:none;overscroll-behavior:none;
         transition:transform 750ms cubic-bezier(.22,1,.36,1);
         will-change:transform;
       }
