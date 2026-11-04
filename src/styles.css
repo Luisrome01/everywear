@@ -707,3 +707,69 @@ button, a, input, select {
     transform: none;
   }
 }
+
+/* Everywear alternate Home (main only): photo + text / walking video. */
+.hero--brand-video { background: #efebe6; }
+.hero--brand-video .hero-copy {
+  isolation: isolate; position: relative; overflow: hidden;
+  color: #fff8f0; background: #4d3733;
+}
+.hero--brand-video .hero-copy::before {
+  content: ""; position: absolute; z-index: -2; inset: 0;
+  background: url("/brand/hero-rack-2026.png") center 44% / cover no-repeat;
+}
+.hero--brand-video .hero-copy::after {
+  content: ""; position: absolute; z-index: -1; inset: 0;
+  background: linear-gradient(115deg, rgba(35,25,22,.80), rgba(40,24,25,.67) 63%, rgba(54,30,30,.58));
+}
+.hero--brand-video .hero-kicker,
+.hero--brand-video .hero-subtitle,
+.hero--brand-video .hero-bottom,
+.hero--brand-video .hero-secondary { color: #fff6eb; }
+.hero--brand-video h1 { color: #fff7ed; text-shadow: 0 2px 16px rgba(17,10,8,.16); }
+.hero--brand-video h1 em { color: #e9b4b8; }
+.hero--brand-video .hero-kicker .line { background: #e9b4b8; }
+.hero--brand-video .hero-secondary { border-color: rgba(255,245,235,.75); }
+.hero--brand-video .hero-bottom { color: rgba(255,249,241,.85); }
+.hero--brand-video .hero-buttons .button { background: #813145; border-color: #813145; color: #fff7ed; }
+.hero--brand-video .hero-vertical { color: rgba(255,244,237,.82); z-index: 1; }
+.hero--brand-video .hero-video-panel { background: #f2f0ee; }
+.hero--brand-video .hero-video {
+  position: absolute; inset: 0; display: block; width: 100%; height: 100%;
+  object-fit: cover; object-position: 54% center; background: #f2f0ee;
+}
+.hero--brand-video .hero-video-play {
+  position: absolute; z-index: 3; bottom: 62px; left: 50%;
+  transform: translateX(-50%); display: inline-flex; align-items: center;
+  gap: 10px; border: 1px solid rgba(61,45,39,.18);
+  border-radius: 999px; padding: 12px 20px;
+  background: rgba(255,249,242,.94); color: #713344;
+  font: 600 11px/1.2 "Jost", sans-serif; letter-spacing: .09em;
+  text-transform: uppercase; cursor: pointer;
+  box-shadow: 0 6px 25px rgba(37,30,22,.16);
+}
+.hero--brand-video .hero-video-play[hidden] { display: none !important; }
+.hero--brand-video .hero-photo-caption { color: #4d3b37; text-shadow: 0 1px 12px #fff; }
+@media (max-width: 760px) {
+  .hero--brand-video .hero-copy {
+    min-height: clamp(575px, 82svh, 820px);
+    padding-top: clamp(72px, 12vw, 108px);
+    padding-bottom: clamp(60px, 11vw, 95px);
+    box-sizing: border-box;
+  }
+  .hero--brand-video .hero-copy::after {
+    background: linear-gradient(120deg, rgba(32,22,21,.78), rgba(46,27,29,.66) 65%, rgba(37,24,25,.53));
+  }
+  .hero--brand-video .hero-bottom { margin-top: 45px; }
+  .hero--brand-video .hero-video-panel {
+    order: 2; min-height: 560px; height: 132vw;
+    max-height: 780px; overflow: hidden;
+  }
+  .hero--brand-video .hero-video { object-position: 53% center; }
+}
+@media (max-width: 420px) {
+  .hero--brand-video .hero-copy { min-height: 600px; }
+  .hero--brand-video .hero-video-panel {
+    min-height: 490px; height: 142vw; max-height: 610px;
+  }
+}

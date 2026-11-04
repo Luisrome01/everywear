@@ -1,6 +1,7 @@
 // Shared Everywear branded loading experience, for the standard (non-scroll) Home.
 // Design and gesture lock match video-scroll-test; only asset preparation differs.
-import { MEDIA } from "./data.js";
+const HERO_BACKGROUND = "/brand/hero-rack-2026.png";
+const HERO_POSTER = "/brand/hero-vino-poster-2026.webp";
 
 const curtain = document.getElementById("ew-entry-curtain");
 const fill = document.getElementById("ew-entry-fill");
@@ -69,28 +70,31 @@ function startAtTop() {
 
 // The normal Home has a hero photo, not an image sequence. Warm that actual
 // photo without adding any of the experimental frame-loading machinery.
-function prepareHomeImage() {
-  if (!homeEntry) { report(70); return Promise.resolve(); }
+function warmImage(src) {
   return new Promise(resolve => {
     const image = new Image();
     image.decoding = "async";
     image.fetchPriority = "high";
-    let settled = false;
-    const timeout = setTimeout(finish, 5000);
+    let done = false;
+    const timer = setTimeout(finish, 5000);
     function finish() {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeout);
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
       image.onload = null;
       image.onerror = null;
-      report(70);
       resolve();
     }
     image.onload = finish;
     image.onerror = finish;
-    image.src = MEDIA.hero;
+    image.src = src;
     if (image.complete && image.naturalWidth) finish();
   });
+}
+function prepareHomeImage() {
+  if (!homeEntry) { report(70); return Promise.resolve(); }
+  return Promise.all([warmImage(HERO_BACKGROUND), warmImage(HERO_POSTER)])
+    .then(() => report(70));
 }
 
 async function enter() {
