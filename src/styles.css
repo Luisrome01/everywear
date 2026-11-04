@@ -688,3 +688,22 @@ button, a, input, select {
     filter: none;
   }
 }
+
+/* Mobile editorial card: the portrait should read as a full-bleed photograph,
+   not a small contained image floating inside a tall white rectangle.
+   Leave desktop's full-body framing untouched. */
+@media (max-width: 760px) {
+  .brand-collage .collage-girl {
+    background: #f8f8f8;
+  }
+
+  .brand-collage .collage-girl img,
+  .brand-collage .collage-girl:hover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 72% 50%;
+    background: transparent;
+    transform: none;
+  }
+}
