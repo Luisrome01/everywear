@@ -1,6 +1,6 @@
 // Shared Everywear branded loading experience, for the standard (non-scroll) Home.
 // Design and gesture lock match video-scroll-test; only asset preparation differs.
-const HERO_BACKGROUND = "/brand/hero-rack-2026.png";
+const HERO_BACKGROUND = "/brand/hero-rack-hd-2026.webp";
 const HERO_POSTER = "/brand/hero-vino-poster-2026.webp";
 
 const curtain = document.getElementById("ew-entry-curtain");

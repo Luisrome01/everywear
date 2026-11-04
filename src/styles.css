@@ -716,7 +716,7 @@ button, a, input, select {
 }
 .hero--brand-video .hero-copy::before {
   content: ""; position: absolute; z-index: -2; inset: 0;
-  background: url("/brand/hero-rack-2026.png") center 44% / cover no-repeat;
+  background: url("/brand/hero-rack-hd-2026.webp") center 44% / cover no-repeat;
 }
 .hero--brand-video .hero-copy::after {
   content: ""; position: absolute; z-index: -1; inset: 0;
