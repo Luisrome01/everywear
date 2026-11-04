@@ -69,12 +69,54 @@ function header() {
           <button class="icon-button bag-trigger" data-action="open-cart" aria-label="Abrir tu selección">
             ${icon("bag", 22)}<span class="bag-badge ${cartCount() ? "" : "empty"}">${cartCount()}</span>
           </button>
-          <button class="icon-button mobile-menu-button" data-action="toggle-menu" aria-label="Abrir menú" aria-expanded="${state.mobileMenu}">${icon(state.mobileMenu ? "close" : "menu", 25)}</button>
+          <button class="icon-button mobile-menu-button" type="button" data-action="toggle-menu" aria-label="Abrir menú" aria-controls="mobile-navigation" aria-expanded="false">
+            <span class="mobile-menu-icon mobile-menu-icon--open">${icon("menu", 25)}</span>
+            <span class="mobile-menu-icon mobile-menu-icon--close">${icon("close", 25)}</span>
+          </button>
         </div>
       </div>
-      ${state.mobileMenu ? `<nav class="mobile-nav" aria-label="Menú móvil"><a href="#/" data-action="close-menu">Inicio</a><a href="#/catalogo" data-action="close-menu">Catálogo</a><a href="#/shopper" data-action="close-menu">Personal shopper</a><a href="${instagram}" target="_blank" rel="noopener noreferrer">Instagram ${icon("arrowup",16)}</a></nav>` : ""}
-    </header>`;
+      <nav class="mobile-nav" id="mobile-navigation" aria-label="Menú móvil" aria-hidden="true" inert>
+        <a href="#/" data-action="close-menu">Inicio</a>
+        <a href="#/catalogo" data-action="close-menu">Catálogo</a>
+        <a href="#/shopper" data-action="close-menu">Personal shopper</a>
+        <a href="${instagram}" data-action="close-menu" target="_blank" rel="noopener noreferrer">Instagram ${icon("arrowup",16)}</a>
+      </nav>
+    </header>
+    <div class="mobile-menu-scrim" data-action="close-menu" aria-hidden="true"></div>`;
 }
+
+
+function setMobileMenu(open) {
+  if (state.mobileMenu === open) return;
+  state.mobileMenu = open;
+  const header = root.querySelector(".header");
+  const nav = root.querySelector(".mobile-nav");
+  const button = root.querySelector(".mobile-menu-button");
+  header?.classList.toggle("is-menu-open", open);
+  root.querySelector(".mobile-menu-scrim")?.classList.toggle("is-active", open);
+  button?.setAttribute("aria-expanded", String(open));
+  button?.setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
+  if (nav) {
+    nav.inert = !open;
+    nav.setAttribute("aria-hidden", String(!open));
+  }
+  document.body.classList.toggle("mobile-nav-open", open);
+}
+// Do not re-render any Home section when toggling. Prevent scroll input
+// on the background without fixing/repositioning the body on iOS.
+function preventMenuBackgroundScroll(event) {
+  if (!state.mobileMenu || !event.cancelable) return;
+  if (event.target instanceof Element && event.target.closest(".mobile-nav")) return;
+  event.preventDefault();
+}
+document.addEventListener("touchmove", preventMenuBackgroundScroll, {passive:false,capture:true});
+document.addEventListener("wheel", preventMenuBackgroundScroll, {passive:false,capture:true});
+window.addEventListener("keydown", event => {
+  if (state.mobileMenu && ["ArrowDown","ArrowUp","PageUp","PageDown","Home","End"," "].includes(event.key)) event.preventDefault();
+}, {capture:true});
+window.addEventListener("resize", () => {
+  if (state.mobileMenu && window.innerWidth > 760) setMobileMenu(false);
+}, {passive:true});
 
 const actionLink = (label, href, extra = "") => `<a class="button button-dark ${extra}" href="${href}"><span>${label}</span>${icon("arrowup", 18)}</a>`;
 
@@ -457,6 +499,7 @@ function initTVRotation() {
 }
 
 function render() {
+  if (state.mobileMenu) setMobileMenu(false);
   root.innerHTML = `${header()}${state.page === "catalogo" ? catalog() : home()}${footer()}${floatingSelection()}${modal()}${basket()}`;
   document.body.classList.toggle("overlay-open", Boolean(state.cartOpen || state.productId));
   updateLookbook();
@@ -518,9 +561,9 @@ root.addEventListener("click", event => {
   if (a === "lookbook-next") { moveLookbook(1); return; }
   if (a === "lookbook-prev") { moveLookbook(-1); return; }
   if (a === "lookbook-go") { state.lookbookIndex = Number(target.dataset.index); updateLookbook(); return; }
-  if (a === "toggle-menu") { state.mobileMenu = !state.mobileMenu; render(); }
-  if (a === "close-menu") { state.mobileMenu = false; }
-  if (a === "open-cart") { state.cartOpen = true; state.mobileMenu = false; state.productId = null; render(); }
+  if (a === "toggle-menu") { setMobileMenu(!state.mobileMenu); return; }
+  if (a === "close-menu") { setMobileMenu(false); return; }
+  if (a === "open-cart") { setMobileMenu(false); state.cartOpen = true; state.productId = null; render(); }
   if (a === "close-cart") { state.cartOpen = false; render(); }
   if (a === "view-product") { state.productId = target.dataset.id; state.colorIndex = 0; state.photoIndex = 0; state.size = ""; state.formFeedback = ""; render(); }
   if (a === "close-modal") { state.productId = null; state.formFeedback = ""; render(); }
@@ -578,7 +621,8 @@ function route() {
   const firstRoute = !hasRouted;
   hasRouted = true;
   state.page = hash.startsWith("#/catalogo") ? "catalogo" : "home";
-  state.cartOpen = false; state.productId = null; state.mobileMenu = false;
+  setMobileMenu(false);
+  state.cartOpen = false; state.productId = null;
   if (hash.startsWith("#/catalogo") && state.pendingCategory) {
     state.category = state.pendingCategory; state.pendingCategory = null;
   }
@@ -600,7 +644,7 @@ root.addEventListener("click", event => {
   const targetHash = navLink.getAttribute("href");
   if (location.hash === targetHash || (location.hash === "" && targetHash === "#/")) {
     event.preventDefault();
-    if (state.mobileMenu) { state.mobileMenu = false; render(); }
+    if (state.mobileMenu) setMobileMenu(false);
     const options = { behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" };
     if (targetHash === "#/shopper") document.getElementById("personal-shopper")?.scrollIntoView({ ...options, block: "start" });
     else window.scrollTo({ top: 0, ...options });
@@ -616,7 +660,7 @@ window.addEventListener("keydown", event => {
   if (event.key === "Escape") {
     if (state.productId) { state.productId = null; render(); }
     else if (state.cartOpen) { state.cartOpen = false; render(); }
-    else if (state.mobileMenu) { state.mobileMenu = false; render(); }
+    else if (state.mobileMenu) setMobileMenu(false);
   }
 });
 document.documentElement.classList.add("has-scroll-reveal");
