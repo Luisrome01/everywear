@@ -187,8 +187,11 @@ async function enter() {
   await sleep(EXIT_MS);
   curtain?.remove();
   document.body.classList.remove("ew-entry-locked");
-  // Do not issue further forced scrollTo commands after unlocking touch
-  // scrolling: in Telegram's embedded iOS browser these can fight native
-  // momentum and make the page appear to jump or refuse to move.
+  startAtTop();
+  // Recheck scroll restoration after the browser's first layout.
+  requestAnimationFrame(() => {
+    startAtTop();
+    requestAnimationFrame(startAtTop);
+  });
 }
 enter();

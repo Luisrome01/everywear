@@ -43,12 +43,3 @@
 @media(min-width:761px) and (max-width:1100px){
  .ew-scroll-stage{top:75px;height:calc(100svh - 75px)}
 }
-
-
-/* Native vertical touch scrolling + lighter compositing for iOS in-app WebViews.
-   Links still request smooth behavior explicitly where needed. */
-html { scroll-behavior: auto; }
-.ew-scroll-zone { touch-action: pan-y; }
-@media (max-width: 760px) {
-  .ew-scroll-story { -webkit-backdrop-filter: none; backdrop-filter: none; }
-}
