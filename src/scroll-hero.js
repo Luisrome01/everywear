@@ -1,6 +1,6 @@
 // Everywear experimental scroll hero (video-scroll-test only).
-// This module owns no autoplay video; progress maps to one of 60 still frames.
-export const SCROLL_FRAMES = 60;
+// This module owns no autoplay video; progress maps to one of 97 HD still frames.
+export const SCROLL_FRAMES = 97;
 // Add ?scrollQuality=720 to compare against the untouched source frames.
 const quality = new URLSearchParams(window.location.search).get("scrollQuality") === "720" ? "scroll-frames" : "scroll-frames-hd";
 const path = i => window.__EW_SCROLL_FRAMES?.[i] || `/${quality}/frame_${String(i + 1).padStart(3, "0")}.webp`;

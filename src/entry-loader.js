@@ -5,9 +5,9 @@ const fill = document.getElementById("ew-entry-fill");
 const indicator = document.getElementById("ew-entry-status");
 const START = Number(window.__EW_ENTRY_START) || performance.now();
 const MIN_VISIBLE_MS = 1750;
-const MAX_FETCH_MS = 7200;
+const MAX_FETCH_MS = 12000;
 const EXIT_MS = 750;
-const FRAME_COUNT = 60;
+const FRAME_COUNT = 97;
 
 let truePercent = 0;
 let displayPercent = 0;
