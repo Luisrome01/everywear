@@ -157,10 +157,6 @@ function home() {
             poster="/brand/hero-vino-poster-2026.webp" aria-label="Modelo Everywear caminando con la bolsa vino de la colección">
             <source src="/videos/everywear-bolsa-vino-2026.mp4" type="video/mp4" />
           </video>
-          <button class="hero-video-play" data-action="play-hero" type="button" aria-label="Reproducir video de la colección" hidden>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z"/></svg>
-            <span>Ver campaña</span>
-          </button>
           <div class="hero-photo-caption">THE NEW EVERYDAY / 2026</div>
         </div>
         <div class="hero-vertical">EVERYWEAR — EVERY OCCASION</div>
@@ -470,20 +466,18 @@ function render() {
 }
 function initHeroVideo() {
   const video = root.querySelector(".hero-video");
-  const button = root.querySelector(".hero-video-play");
-  if (!video || !button) return;
-  const showButton = () => { button.hidden = !video.paused; };
-  video.addEventListener("playing", showButton);
-  video.addEventListener("pause", showButton);
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    video.pause();
-    button.hidden = false;
-    return;
-  }
-  const result = video.play();
-  if (result && typeof result.catch === "function") {
-    result.catch(() => { button.hidden = false; });
-  }
+  if (!video) return;
+  video.muted = true;
+  video.defaultMuted = true;
+  video.loop = true;
+  video.playsInline = true;
+  const play = () => {
+    if (!video.isConnected || !video.paused) return;
+    const result = video.play();
+    if (result && typeof result.catch === "function") result.catch(() => {});
+  };
+  video.addEventListener("canplay", play, { once: true });
+  play();
 }
 function openWhatsApp(message) {
   window.open(waLink(message), "_blank", "noopener,noreferrer");
@@ -520,10 +514,6 @@ root.addEventListener("click", event => {
   const target = event.target.closest("[data-action]");
   if (!target) return;
   const a = target.dataset.action;
-  if (a === "play-hero") {
-    root.querySelector(".hero-video")?.play()?.catch(() => {});
-    return;
-  }
   if (a === "tv-change") { tvRotation?.change(Number(target.dataset.tvScreen)); return; }
   if (a === "lookbook-next") { moveLookbook(1); return; }
   if (a === "lookbook-prev") { moveLookbook(-1); return; }
