@@ -26,6 +26,15 @@ Abrir: **http://localhost:5173/store-platform/admin/**
 
 El proyecto público se visualiza como siempre en \`http://localhost:5173/\`. El administrador es una ruta independiente que no se importa en el sitio actual.
 
+### Pruebas automáticas
+Desde la raíz del repositorio, ejecutar:
+
+```bash
+node --test store-platform/tests/adapters.test.mjs
+```
+
+Estas pruebas validan los ejemplos originales, la traducción de productos a la forma del storefront y el filtrado/orden de fotografías. Las comprobaciones estáticas no sustituyen una prueba de navegador ni de Supabase.
+
 ### Funciones de demostración
 1. **Productos:** crear, editar nombre, descripción, precio, categoría, etiqueta, estado y destacado; archivar un producto.
 2. **Tallas y colores:** agregar/eliminar variantes. El stock vacío significa *aún no registrado*, mientras \`0\` significa *agotado*. Se impiden duplicados color + talla.
