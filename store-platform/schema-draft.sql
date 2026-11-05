@@ -17,6 +17,7 @@ create table if not exists public.everywear_products (
   price numeric(12,2) not null default 0 check (price >= 0),
   status text not null default 'draft' check (status in ('draft','active','archived')),
   featured boolean not null default false,
+  tag text not null default '',
   sort_order integer not null default 0,
   -- images: [{ "src": "https://...", "alt": "..." }]
   images jsonb not null default '[]'::jsonb check (jsonb_typeof(images) = 'array'),
@@ -106,7 +107,15 @@ using (exists (select 1 from public.everywear_admins a where a.user_id = (select
 
 grant select on public.everywear_products, public.everywear_home_media to anon, authenticated;
 grant insert, update, delete on public.everywear_products, public.everywear_home_media to authenticated;
-grant select on public.everywear_admins to authenticated;
+grant select on public.everywear_admins to anon, authenticated; -- RLS sigue denegando filas a anon
+
+-- Los administradores deben poder leer los metadatos antes de actualizar Storage.
+create policy "ew_media_admin_read"
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'everywear-media'
+  and exists (select 1 from public.everywear_admins a where a.user_id = (select auth.uid()))
+);
 
 -- Recursos públicos de la tienda: lectura libre; escrituras solo administradores.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
