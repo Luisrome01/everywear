@@ -299,7 +299,7 @@ document.addEventListener("click", async e=>{
   if(action==="export-data") {
     const blob=new Blob([JSON.stringify(db,null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob),link=document.createElement("a");
-    link.href=url;link.download="everywear-demo.json";link.click();URL.revokeObjectURL(url);
+    link.href=url;link.download="everywear-studio-catalog-backup.json";link.click();URL.revokeObjectURL(url);
   }
   if(action==="sign-out"){
     api.signOut();
@@ -321,7 +321,7 @@ document.addEventListener("change",async e=>{
       const src=await fileAsImage(e.target.files?.[0],id==="product-photo-file"?"products":"home");
       if(id==="product-photo-file"){collectProduct();draft.images.push({id:uid(),src,alt:draft.name});}
       else {collectHome();homeDraft.push({...blankMedia(),src});}
-      render();notify("Imagen agregada a la demo. Guarda para conservarla.");
+      render();notify("Imagen subida a Supabase Storage. Guarda para vincularla al producto o galería.");
     } catch(error){notify(error.message);}
   }
 

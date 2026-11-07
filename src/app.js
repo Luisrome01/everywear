@@ -663,6 +663,7 @@ async function bootEverywearStore() {
       console.warn("Everywear preview: using original gallery while Supabase is unavailable:",error.message);
     }
   }
+  state.cart = getSavedCart();
   route();
 }
 document.documentElement.classList.add("has-scroll-reveal");
