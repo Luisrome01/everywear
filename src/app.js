@@ -124,11 +124,13 @@ window.addEventListener("resize", () => {
 const actionLink = (label, href, extra = "") => `<a class="button button-dark ${extra}" href="${href}"><span>${label}</span>${icon("arrowup", 18)}</a>`;
 
 function categoryTiles() {
+  // Never depend on product order: new/archived items must not break Home.
+  const coverFor = (category,fallback) => PRODUCTS.find(p=>p.category===category)?.image || fallback;
   const tiles = [
-    ["Tops", PRODUCTS[0].image, "Tops & camisas"],
-    ["Conjuntos", PRODUCTS[1].image, "Conjuntos"],
-    ["Vestidos", PRODUCTS[3].image, "Vestidos"],
-    ["Accesorios", PRODUCTS[7].image, "Accesorios"]
+    ["Tops", coverFor("Tops",MEDIA.story), "Tops & camisas"],
+    ["Conjuntos", coverFor("Conjuntos",MEDIA.collection), "Conjuntos"],
+    ["Vestidos", coverFor("Vestidos",MEDIA.hero), "Vestidos"],
+    ["Accesorios", coverFor("Accesorios",MEDIA.accessories), "Accesorios"]
   ];
   return `<section class="section categories-section" aria-labelledby="category-title">
     <div class="section-topline"><span>05 / EXPLORA</span><span>PIEZAS PARA CADA VERSIÓN DE TI</span></div>
@@ -643,17 +645,12 @@ async function bootEverywearStore() {
   if (hasEverywearApi) {
     try {
       const [products,media] = await Promise.all([listPublicProducts(),listHome()]);
-      for (const row of products) {
-        const item = publicProduct(row);
-        const oldIndex = PRODUCTS.findIndex(x => x.id === row.slug || x.id === row.id);
-        if(oldIndex >= 0){
-          // Keep the historical storefront ID so selections/cart remain stable.
-          PRODUCTS[oldIndex] = {...item,id:PRODUCTS[oldIndex].id};
-        } else PRODUCTS.push(item);
-      }
-      for(const item of PRODUCTS){
-        if(item.category && !CATEGORIES.includes(item.category))CATEGORIES.push(item.category);
-      }
+      // On a successful response Supabase is the sole catalog source.
+      // Empty active results must remain empty (not resurrect archived demos).
+      PRODUCTS.splice(0, PRODUCTS.length,
+        ...products.map(row=>({...publicProduct(row),id:row.slug||row.id})));
+      const categories=[...new Set(PRODUCTS.map(p=>p.category).filter(Boolean))];
+      CATEGORIES.splice(0,CATEGORIES.length,"Todos",...categories);
       const tv = media.filter(m => m.section === "tv").sort((a,b)=>a.sort_order-b.sort_order);
       if(tv.length)TV_PHOTOS.splice(0,TV_PHOTOS.length,...tv.map(m=>({src:m.src,alt:m.alt||""})));
       const lookbook = media.filter(m => m.section === "lookbook").sort((a,b)=>a.sort_order-b.sort_order);

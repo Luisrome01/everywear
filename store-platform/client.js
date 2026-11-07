@@ -38,7 +38,13 @@ export async function signIn(email,password){
   return data.user;
 }
 export function signOut(){
+  const token=session?.access_token;
   saveSession(null);
+  // Invalidate the server session as well. Never delay the local logout UI.
+  if (token && configured) {
+    fetch(URL+"/auth/v1/logout",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+token}})
+      .catch(()=>{});
+  }
 }
 async function refreshSession(){
   if (!session?.refresh_token) {saveSession(null);throw Error("Sesión vencida. Inicia sesión nuevamente");}

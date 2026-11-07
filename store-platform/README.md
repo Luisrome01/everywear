@@ -17,7 +17,7 @@ Las tablas creadas son:
 - `everywear_product_images`: fotografías ordenadas de cada producto.
 - `everywear_home_media`: fotografías ordenadas de televisores, lookbook y hero.
 
-Migraciones canónicas: `migrations/001_everywear_relational_preview.sql`, `migrations/002_everywear_atomic_editor.sql`, `migrations/003_everywear_anon_admin_policy_permission.sql`, `migrations/004_everywear_public_mutation_hardening.sql` y `migrations/005_everywear_split_write_policies.sql`. Todas se ejecutaron en PERSONAL. No vuelvas a ejecutarlas sin revisar el estado real. `schema-draft.sql` es solo un borrador histórico, **no es la estructura actual**.
+Migraciones canónicas: `migrations/001_everywear_relational_preview.sql`, `migrations/002_everywear_atomic_editor.sql`, `migrations/003_everywear_anon_admin_policy_permission.sql`, `migrations/004_everywear_public_mutation_hardening.sql` y `migrations/005_everywear_split_write_policies.sql` y `migrations/006_seed_original_preview.sql`. Todas se aplicaron únicamente a Supabase PERSONAL. No vuelvas a ejecutarlas sin revisar el estado real. `schema-draft.sql` es solo un borrador histórico, **no es la estructura actual**.
 
 Las seis tablas tienen RLS habilitado. Las escrituras requieren usuario Auth con su UUID registrado en `everywear_admins`; el público solo puede leer productos activos y medios habilitados. El bucket público `everywear-media` permite leer fotos, pero subir/actualizar/eliminar exige ser administrador.
 
@@ -35,7 +35,7 @@ No existe usuario Auth ni permisos concedidos automáticamente. No se debe compa
 
 ## Catálogo y límites actuales
 
-- El storefront conserva las 8 tarjetas y la identidad visual existente como contenido editorial de respaldo. Los productos **activos** de Supabase se agregan y actualizan cuando tienen el mismo slug. Los borradores no se publican.
+- El storefront obtiene su catálogo **exclusivamente de Supabase cuando la consulta funciona**. La base personal contiene las mismas 8 fichas originales del catálogo visible (mismos nombres, precios, colores, tallas y fotos) en estado Activo solo en este preview. Se importaron 70 variantes con `stock = NULL`, **sin inventar existencias**. Al archivar artículos no reaparecen por su posición en los arreglos. Los borradores, incluido el producto ficticio, no se publican.
 - Las 10 fotografías de televisores y las 8 imágenes del lookbook originales están registradas en Supabase. Su edición administra el contenido sin modificar el motor de scroll.
 - El producto `producto-prueba-everywear` es ficticio y permanece en **Borrador**.
 - Pedidos enviados por WhatsApp **no** descuentan inventario. La venta no se confirma por abrir un enlace.
