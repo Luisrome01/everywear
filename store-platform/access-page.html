@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#f4ede2">
+  <title>Acceso privado · Everywear Studio</title>
+  <style>
+    :root{--wine:#792e45;--deep:#341d26;--cream:#f4ede2;--ink:#302622;--muted:#74675d;--line:#d8c9b8}
+    *{box-sizing:border-box}
+    html{min-height:100%;background:var(--cream)}
+    body{margin:0;min-height:100svh;font-family:Arial,Helvetica,sans-serif;color:var(--ink)}
+    button,input{font:inherit}
+    .layout{min-height:100svh;display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr)}
+    .form-side{display:flex;flex-direction:column;padding:clamp(24px,4.2vw,64px) clamp(25px,6.5vw,106px);background:var(--cream)}
+    .brand{display:inline-flex;flex-direction:column;align-self:flex-start;text-decoration:none;color:#512c35;font:italic 500 clamp(35px,3.5vw,49px)/.96 Georgia,'Times New Roman',serif;letter-spacing:-.085em}
+    .brand span{margin-top:12px;font:600 9px/1.4 Arial,sans-serif;letter-spacing:.3em;color:#8b6970}
+    .content{width:100%;max-width:468px;margin:auto 0}
+    .eyebrow{display:flex;align-items:center;gap:13px;font-size:10px;font-weight:700;letter-spacing:.23em;text-transform:uppercase;color:#766257}
+    .eyebrow:before{content:'';display:block;width:38px;height:1px;background:#846c63}
+    h1{margin:28px 0 17px;font:400 clamp(48px,5.9vw,85px)/.99 Georgia,'Times New Roman',serif;letter-spacing:-.067em}
+    h1 em{font-weight:400;color:var(--wine)}
+    .intro{max-width:390px;margin:0 0 36px;font-size:14px;line-height:1.85;color:#70645c}
+    .form{display:grid;gap:18px}
+    label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+    input{margin-top:9px;width:100%;height:55px;border:1px solid #cbbbae;border-radius:2px;padding:0 16px;background:#fffaf4;color:#342830;font-size:15px;outline-offset:3px}
+    input::placeholder{color:#a2988c}
+    input:focus{outline:2px solid #8b4559;border-color:transparent}
+    .submit{margin-top:10px;display:flex;justify-content:space-between;align-items:center;width:100%;min-height:57px;background:var(--wine);color:#fffaf6;border:1px solid var(--wine);padding:0 22px;cursor:pointer;text-transform:uppercase;letter-spacing:.12em;font-size:11px;font-weight:700;transition:background .2s ease,transform .2s ease}
+    .submit:hover{background:#612339;transform:translateY(-2px)}
+    .submit:focus-visible{outline:2px solid var(--deep);outline-offset:3px}
+    .submit svg{width:21px;height:21px}
+    .message{color:#a5273e;background:#fbede7;border-left:3px solid #ab4b5c;padding:12px 14px;font-size:13px;line-height:1.55;margin:0}
+    .message:empty{display:none}
+    .details{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:26px;color:#77685d;font-size:11px;line-height:1.7}
+    .details svg{flex-shrink:0}
+    .footer{margin-top:46px;color:#968579;font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+    .editorial{position:relative;overflow:hidden;min-height:100svh;background:#776b64}
+    .editorial:before{content:'';position:absolute;inset:0;background:url("/_entry-cover") 50% 50% / cover no-repeat;transform:scale(1.02)}
+    .editorial:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(23,14,17,.2),transparent 42%,rgba(23,12,17,.67))}
+    .editorial-content{position:absolute;z-index:1;inset:auto clamp(30px,5vw,80px) 48px;color:#fff8f1}
+    .editorial-kicker{font-size:10px;font-weight:700;letter-spacing:.23em}
+    .editorial-title{margin:18px 0 13px;font:italic 400 clamp(43px,5.5vw,74px)/1.06 Georgia,'Times New Roman',serif;letter-spacing:-.045em}
+    .editorial-caption{font-size:11px;letter-spacing:.14em;color:#f8e7dd}
+    @media(max-width:850px){
+      .layout{grid-template-columns:1fr;min-height:100svh}
+      .form-side{min-height:100svh;padding:30px clamp(24px,8vw,60px)}
+      .content{margin:auto 0}
+      h1{font-size:clamp(52px,10vw,76px)}
+      .editorial{display:none}
+    }
+    @media(max-width:480px){
+      .form-side{padding:26px 25px 30px}
+      .content{padding:35px 0}
+      h1{font-size:clamp(49px,13vw,66px)}
+      .intro{font-size:13px;margin-bottom:28px}
+      .footer{margin-top:35px}
+    }
+    @media(prefers-reduced-motion:reduce){.submit{transition:none}.submit:hover{transform:none}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <main class="form-side">
+    <div class="brand" aria-label="Everywear Studio">everywear.<span>PRIVATE STUDIO / 2026</span></div>
+    <section class="content" aria-labelledby="access-title">
+      <div class="eyebrow">ACCESO A VISTA PREVIA</div>
+      <h1 id="access-title">Bienvenida<br>a <em>Everywear.</em></h1>
+      <p class="intro">Un espacio privado para conocer nuestra tienda y preparar cada detalle de la colección.</p>
+      {{MESSAGE}}
+      <form class="form" action="/access" method="post" autocomplete="on">
+        <input type="hidden" name="next" value="{{NEXT}}">
+        <label for="username">Nombre de usuario
+          <input id="username" name="username" autocomplete="username" required maxlength="140" placeholder="Tu usuario de acceso" autofocus>
+        </label>
+        <label for="password">Contraseña
+          <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Tu contraseña">
+        </label>
+        <button class="submit" type="submit">
+          <span>Entrar a la vista privada</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 12h16m-7-7 7 7-7 7"/></svg>
+        </button>
+      </form>
+      <p class="details">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+        Entorno de pruebas protegido. Para administrar productos también necesitarás tu cuenta autorizada de Supabase.
+      </p>
+    </section>
+    <div class="footer">EVERYWEAR — STYLE IS PERSONAL.</div>
+  </main>
+  <aside class="editorial" aria-hidden="true">
+    <div class="editorial-content">
+      <div class="editorial-kicker">OUR WORLD / EDITION 01</div>
+      <div class="editorial-title">Every day.<br>Every wear.</div>
+      <div class="editorial-caption">YOUR ACCESS TO EUROPEAN FASHION</div>
+    </div>
+  </aside>
+</div>
+</body>
+</html>

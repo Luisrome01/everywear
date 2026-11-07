@@ -1,5 +1,17 @@
 # Everywear Studio — Preview con Supabase PERSONAL
 
+## Acceso de vista previa: pantalla de marca, no popup del navegador
+
+La vista previa ya no envía el desafío `WWW-Authenticate: Basic` que abre el cuadro gris del navegador. En su lugar, `store-platform/preview-server.mjs` muestra `access-page.html`: una página responsive con colores vino y crema e imagen editorial Everywear.
+
+- **Primer acceso:** usuario y contraseña de **Render PREVIEW_USER / PREVIEW_PASSWORD**, desde una pantalla de la marca. No están en GitHub, tampoco se guardan en el frontend.
+- Cuando las credenciales son correctas, el servidor entrega una cookie de sesión firmada, `HttpOnly; Secure; SameSite=Lax`, con duración máxima de 12 horas. Los demás archivos siguen protegidos.
+- Después, el administrador utiliza su pantalla distinta de **Supabase Auth**, con email y contraseña propios y políticas RLS. Una sesión del preview no permite por sí sola administrar productos.
+- Hay límites de intentos, validación de destino y cabeceras de seguridad. No se desprotege el sitio de pruebas.
+- Para cambiar la apariencia de acceso, editar `store-platform/access-page.html`; nunca configurar contraseñas en ese HTML.
+- `POST /logout` permite cerrar la sesión del gateway; el servicio mantiene `GET /healthz` para Render.
+
+
 **Rama exclusiva de desarrollo:** `everywhere-full-store-scroll-preview`  
 **Render protegido:** https://everywear-full-store-preview.onrender.com  
 **Panel:** https://everywear-full-store-preview.onrender.com/store-platform/admin/  
