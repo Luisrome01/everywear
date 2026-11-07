@@ -54,3 +54,7 @@ No usar claves `service_role`, secret keys, contraseñas administrativas ni cred
 
 Verificar en navegador con una cuenta Auth habilitada: crear, editar, subir y retirar fotos, archivar, publicar en preview y comprobar respuesta después de recargar. Las pruebas SQL de almacenamiento y RLS se pueden hacer por separado, pero **no sustituyen** la prueba con una sesión de administradora. La tienda pública de producción y PROPORCA no deben modificarse.
 
+
+## Pruebas de compilación
+
+El script \`npm test\` ejecuta las pruebas de los adaptadores y datos iniciales. El \`prebuild\` del preview ejecuta esas pruebas antes de empaquetar las 97 imágenes del Hero con scroll. No es una prueba end-to-end en navegador.

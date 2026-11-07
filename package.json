@@ -7,7 +7,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "prebuild": "node scripts/build-scroll-hd.mjs"
+    "prebuild": "npm test && node scripts/build-scroll-hd.mjs",
+    "test": "node --test store-platform/tests/adapters.test.mjs"
   },
   "devDependencies": {
     "vite": "^6.3.5",

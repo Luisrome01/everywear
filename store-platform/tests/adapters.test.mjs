@@ -39,3 +39,19 @@ test("TV selector ignores disabled media and keeps order", () => {
   ];
   assert.deepEqual(mediaForStorefront(rows,"tv").map(x=>x.src),["A","B"]);
 });
+
+test("relational Supabase image/variant joins map to legacy storefront",()=>{
+  const item=productForStorefront({
+    id:"uuid",slug:"test-product",name:"Ejemplo",category:"Tops",price:"12.00",
+    everywear_product_images:[{src:"/brand/bag.webp",sort_order:0}],
+    everywear_product_variants:[
+      {color:"Crema",hex:"#e8dec8",size:"S",stock:4},
+      {color:"Negro",hex:"#292522",size:"M",stock:2}
+    ]
+  });
+  assert.equal(item.slug,"test-product");
+  assert.equal(item.price,12);
+  assert.deepEqual(item.sizes,["S","M"]);
+  assert.equal(item.image,"/brand/bag.webp");
+  assert.equal(item.variants.length,2);
+});

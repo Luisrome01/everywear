@@ -2,10 +2,12 @@
 // Not connected to src/app.js yet. No credentials, writes, or effects.
 const FALLBACK_COLOR = "#777777";
 export function productForStorefront(row) {
-  const photos = (Array.isArray(row.images) ? row.images : [])
+  const sourceImages = row.everywear_product_images ?? row.images;
+  const photos = (Array.isArray(sourceImages) ? sourceImages : []).sort((a,b)=>(a.sort_order??0)-(b.sort_order??0))
     .filter(x => x && typeof x.src === "string" && x.src)
     .map(x => x.src);
-  const variants = Array.isArray(row.variants) ? row.variants : [];
+  const sourceVariants = row.everywear_product_variants ?? row.variants;
+  const variants = Array.isArray(sourceVariants) ? sourceVariants : [];
   const colorMap = new Map();
   for (const v of variants) {
     const name = String(v.color || "Único");
@@ -15,7 +17,7 @@ export function productForStorefront(row) {
   const sizes = [...new Set(variants.map(v => String(v.size || "Única")))]
     .filter(x => x !== "Única");
   return {
-    id: row.id, name: row.name, category: row.category,
+    id: row.id, slug: row.slug, name: row.name, category: row.category,
     price: Number(row.price) || 0, description: row.description || "",
     tag: row.tag || "", image: photos[0] || "/brand/bag.webp",
     images: photos.length ? photos : ["/brand/bag.webp"],
@@ -30,7 +32,7 @@ export function mediaForStorefront(rows, section) {
 }
 export async function loadPublishedStorefront(client) {
   const [products, media] = await Promise.all([
-    client.from("everywear_products").select("*").eq("status","active").order("sort_order"),
+    client.from("everywear_products").select("*,everywear_product_variants(*),everywear_product_images(*)").eq("status","active").order("sort_order"),
     client.from("everywear_home_media").select("*").eq("enabled",true).order("sort_order")
   ]);
   if (products.error) throw products.error;
