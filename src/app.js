@@ -1,6 +1,7 @@
 import { PRODUCTS, CATEGORIES, MEDIA, money } from "./data.js";
 import { BRAND_MEDIA, LOOKBOOK_SLIDES } from "./brand-media.js";
 import { TV_PHOTOS } from "./tv-photos.js";
+import { listPublicProducts, listHome, publicProduct, configured as hasEverywearApi } from "../store-platform/client.js";
 import { scrollHeroMarkup, initScrollHero } from "./scroll-hero.js";
 import "./styles.css";
 import "./scroll-hero.css";
@@ -635,5 +636,35 @@ window.addEventListener("keydown", event => {
     else if (state.mobileMenu) setMobileMenu(false);
   }
 });
+
+async function bootEverywearStore() {
+  // Existing editorial assets remain as a resilient fallback if Supabase
+  // cannot be reached. Only this isolated preview fetches live store data.
+  if (hasEverywearApi) {
+    try {
+      const [products,media] = await Promise.all([listPublicProducts(),listHome()]);
+      for (const row of products) {
+        const item = publicProduct(row);
+        const oldIndex = PRODUCTS.findIndex(x => x.id === row.slug || x.id === row.id);
+        if(oldIndex >= 0){
+          // Keep the historical storefront ID so selections/cart remain stable.
+          PRODUCTS[oldIndex] = {...item,id:PRODUCTS[oldIndex].id};
+        } else PRODUCTS.push(item);
+      }
+      for(const item of PRODUCTS){
+        if(item.category && !CATEGORIES.includes(item.category))CATEGORIES.push(item.category);
+      }
+      const tv = media.filter(m => m.section === "tv").sort((a,b)=>a.sort_order-b.sort_order);
+      if(tv.length)TV_PHOTOS.splice(0,TV_PHOTOS.length,...tv.map(m=>({src:m.src,alt:m.alt||""})));
+      const lookbook = media.filter(m => m.section === "lookbook").sort((a,b)=>a.sort_order-b.sort_order);
+      if(lookbook.length)LOOKBOOK_SLIDES.splice(0,LOOKBOOK_SLIDES.length,
+        ...lookbook.map((m,i)=>({image:m.src,alt:m.alt||"",label:"Editorial "+String(i+1).padStart(2,"0") })));
+    } catch (error) {
+      console.warn("Everywear preview: using original gallery while Supabase is unavailable:",error.message);
+    }
+  }
+  route();
+}
 document.documentElement.classList.add("has-scroll-reveal");
-route();
+bootEverywearStore().catch(error=>{console.warn("Everywear preview bootstrap:",error);route();});
+

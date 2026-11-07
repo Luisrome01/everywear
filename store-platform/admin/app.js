@@ -1,11 +1,9 @@
-import { makeFixtures } from "./fixtures.js";
+import * as api from "../client.js";
 
-// Administrador DEMO en navegador. No autenticación ni actualizaciones a la web pública.
-// Cuando se conecte Supabase, reemplazar este repositorio local, no exponerlo en producción.
-const KEY = "everywear_full_store_demo_v1";
+// All commercial data is persisted in Supabase PERSONAL; only session tokens live in localStorage.
 const WORKSPACE = document.getElementById("workspace");
 const TOAST = document.getElementById("toast");
-const TITLES = { dashboard: "Resumen general", products: "Catálogo de productos", home: "Contenido del Home", settings: "Datos de prueba" };
+const TITLES = { dashboard: "Resumen general", products: "Catálogo de productos", home: "Contenido del Home", settings: "Cuenta y seguridad" };
 const deepCopy = value => JSON.parse(JSON.stringify(value));
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -15,34 +13,26 @@ const money = value => new Intl.NumberFormat("en-US", {style:"currency",currency
 const slugify = name => String(name).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()
   .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,160) || "producto";
 const safeImg = src => {
-  const s = String(src || "");
-  return /^https:\/\//i.test(s) || s.startsWith("/") && !s.startsWith("//")
-    || /^data:image\/(png|jpeg|webp|avif);base64,/i.test(s)
-      ? esc(s) : "";
+  const value=String(src||"");
+  return /^https:\/\//i.test(value) || value.startsWith("/") && !value.startsWith("//")
+    ? esc(value) : "";
 };
 const blankProduct = () => ({
-  id: uid(), slug:"", name:"",category:"Tops",description:"",price:0,status:"draft",
+  id:uid(),slug:"",name:"",category:"Tops",description:"",price:0,status:"draft",
   featured:false,sortOrder:0,tag:"",images:[],variants:[]
 });
 const blankMedia = () => ({id:uid(),src:"",alt:"",enabled:true,sortOrder:0});
-
-function validateShape(x) {
-  return x && x.version === 1 && Array.isArray(x.products) && x.home
-    && ["tv","lookbook","hero"].every(k => Array.isArray(x.home[k]));
+let db = {products:[],home:{tv:[],lookbook:[],hero:[]},settings:{storeName:"Everywear",currency:"USD"}};
+let authorizedEmail = "";
+async function loadData() {
+  const [products,media]=await Promise.all([api.listProducts(),api.listHome(true)]);
+  db.products=products;
+  db.home={tv:[],lookbook:[],hero:[]};
+  media.forEach(item=>{if(db.home[item.section])db.home[item.section].push({
+    id:item.id,src:item.src,alt:item.alt,enabled:item.enabled,sortOrder:item.sort_order
+  });});
 }
-function loadDemo() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(KEY) || "null");
-    if (validateShape(saved)) return saved;
-  } catch (err) { console.warn("Datos locales no disponibles:", err); }
-  return makeFixtures();
-}
-let db = loadDemo();
 let view = "dashboard", query = "", editing = false, draft = null, homeTab = "tv", homeDraft = [];
-function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(db)); return true; }
-  catch (err) { console.warn("No se pudo guardar:", err); notify("No se pudo guardar: espacio local insuficiente"); return false; }
-}
 function notify(msg) {
   TOAST.textContent = msg; TOAST.classList.add("show");
   clearTimeout(notify.timer); notify.timer = setTimeout(()=>TOAST.classList.remove("show"),3500);
@@ -64,18 +54,18 @@ function renderDashboard() {
   const unknown = variants.filter(v=>v.stock===null || v.stock==="" || v.stock===undefined).length;
   const stock = variants.reduce((n,v)=>n+(v.stock===null || v.stock==="" || v.stock===undefined?0:Number(v.stock)||0),0);
   return header("Tu tienda, en un solo lugar",
-    "Estructura inicial para gestionar la información comercial sin modificar el diseño existente.")+
-    '<div class="cards">'+card("Productos cargados",db.products.length,"Incluye ejemplos")+
-    card("Publicables",active,"Estado activo en esta demo")+
+    "Administra productos, inventario y fotografías con almacenamiento seguro.")+
+    '<div class="cards">'+card("Productos cargados",db.products.length,"Registros reales de Supabase")+
+    card("Publicables",active,"Visibles en la vista previa")+
     card("Unidades registradas",stock,"Solo cantidades configuradas")+
     card("Variantes sin stock definido",unknown,"Pendientes de completar")+'</div>'+
     '<div class="layout-two"><section class="panel"><div class="panel-head"><h2>Qué ya puedes probar</h2></div>'+
-    '<p class="muted">Crear y editar productos, gestionar precios, descripciones, variantes por talla y color, ordenar fotografías y preparar las tres pantallas del Home.</p>'+
-    '<p class="muted">Todos los productos iniciales son ejemplos del diseño actual, no artículos reales verificados.</p>'+
+    '<p class="muted">Crea productos con precios, descripciones, colores, tallas, inventario y fotografías almacenadas en Supabase.</p>'+
+    '<p class="muted">Solo los productos activos aparecen en la tienda de pruebas. Los borradores no son públicos.</p>'+
     '<button class="btn" data-action="go-products">Administrar productos</button></section>'+
-    '<section class="panel"><div class="panel-head"><h2>Próxima integración</h2></div>'+
-    '<p class="muted">Supabase Auth, PostgreSQL, Storage, políticas de acceso, API pública y sincronización del frontend.</p>'+
-    '<p class="muted">El catálogo público y el scroll original permanecen intactos.</p>'+
+    '<section class="panel"><div class="panel-head"><h2>Sincronización y seguridad</h2></div>'+
+    '<p class="muted">Conexión activa con PostgreSQL, Supabase Auth y almacenamiento de imágenes protegido por permisos.</p>'+
+    '<p class="muted">Los productos de demostración permanecen como borrador hasta que los publiques explícitamente.</p>'+
     '<button class="btn btn-outline" data-action="go-home">Editar fotos del Home</button></section></div>';
 }
 function productRows() {
@@ -101,7 +91,7 @@ function renderProducts() {
   return header("Catálogo de productos","Crea artículos, organiza variantes y prepara su publicación.",
     '<button class="btn" data-action="new-product">+ Nuevo producto</button>')+
     '<section class="panel"><div class="toolbar"><input id="search-products" type="search" placeholder="Buscar por nombre o categoría…" value="'+esc(query)+'">'+
-    '<span class="muted">'+db.products.length+' productos · los cambios no afectan la web</span></div>'+
+    '<span class="muted">'+db.products.length+' productos · sincronizados con Supabase</span></div>'+
     '<div class="table-wrap"><table><thead><tr><th>Artículo</th><th>Precio</th><th>Estado</th><th>Variantes</th><th>Inventario</th><th>Acciones</th></tr></thead>'+
     '<tbody id="product-rows">'+productRows()+'</tbody></table></div></section>';
 }
@@ -124,7 +114,7 @@ function imageRow(image,i) {
 }
 function renderProductEditor() {
   return header(draft.name ? "Editar "+esc(draft.name) : "Nuevo producto",
-    "Formulario de demostración. La web actual no se modificará.",
+    "Los cambios se guardan en Supabase PERSONAL. Solo el estado Activo se muestra en la tienda de prueba.",
     '<button class="btn btn-outline" data-action="cancel-product">← Regresar</button>')+
     '<form id="product-form" class="panel"><div class="form-grid">'+
     '<label>Nombre del producto<input name="name" maxlength="180" required value="'+esc(draft.name)+'"></label>'+
@@ -141,11 +131,11 @@ function renderProductEditor() {
     '<p class="help">Deja stock vacío si aún no lo sabes. Cero significa agotado. Cada combinación color/talla debe ser única.</p>'+
     '<div id="variant-list">'+(draft.variants.length?draft.variants.map(variantRow).join(""):'<div class="empty">Sin variantes. Agrega una para definir colores y tallas.</div>')+'</div>'+
     '<div class="section-bar"><h3>Fotografías del producto</h3><button type="button" class="btn btn-outline btn-sm" data-action="add-image">+ Fotografía</button></div>'+
-    '<p class="help">Las URLs se guardan localmente. También puedes elegir un archivo pequeño para probar; se almacenará únicamente en este navegador.</p>'+
+    '<p class="help">Selecciona archivos JPG, PNG, WebP o AVIF de hasta 8 MB. Se subirán a Supabase Storage. También puedes usar una URL HTTPS.</p>'+
     '<input type="file" id="product-photo-file" accept="image/png,image/jpeg,image/webp,image/avif" aria-label="Agregar foto desde el equipo">'+
     '<div id="image-list">'+(draft.images.length?draft.images.map(imageRow).join(""):'<div class="empty">Este producto no tiene fotografías.</div>')+'</div>'+
     '<div class="footer-actions"><button class="btn btn-outline" type="button" data-action="cancel-product">Cancelar</button>'+
-    '<button class="btn" type="submit">Guardar producto (demo)</button></div></form>';
+    '<button class="btn" type="submit">Guardar producto</button></div></form>';
 }
 function renderHome() {
   const labels = {tv:"Tres televisores",lookbook:"Lookbook editorial",hero:"Hero / portada"};
@@ -156,7 +146,7 @@ function renderHome() {
     ).join("")+'</div><section class="panel"><div class="panel-head"><div><h2>'+labels[homeTab]+'</h2>'+
     '<p class="muted">Ordena las fotografías y marca cuáles deben mostrarse.</p></div>'+
     '<button type="button" class="btn" data-action="add-home">+ Agregar imagen</button></div>'+
-    '<p class="help">No se cambian la estructura de los televisores, las transiciones ni el diseño de scroll. Las imágenes se configurarán desde Supabase cuando esté conectado.</p>'+
+    '<p class="help">Las fotografías y su orden se guardan en Supabase. Se mantiene el diseño original de los televisores y el scroll.</p>'+
     '<div id="home-list">'+(items.length ? items.map((item,i)=>
       '<div class="home-tile" data-home-row data-index="'+i+'">'+imgMarkup(item.src,item.alt,"thumb")+
       '<div><label>URL de imagen<input data-home-field="src" value="'+esc(item.src)+'" placeholder="https://…"></label>'+
@@ -167,18 +157,17 @@ function renderHome() {
       '<button class="btn btn-outline btn-sm" data-action="move-home" data-index="'+i+'" data-direction="1" title="Bajar">↓</button>'+
       '<button class="btn btn-danger btn-sm" data-action="remove-home" data-index="'+i+'" title="Eliminar">×</button></div></div>').join("")
       : '<div class="empty">No hay imágenes configuradas para esta sección.</div>')+'</div>'+
-    '<div class="section-bar"><label>Agregar imagen desde equipo (demo)<input type="file" id="home-photo-file" accept="image/jpeg,image/png,image/webp,image/avif"></label></div>'+
-    '<div class="footer-actions"><button class="btn" data-action="save-home">Guardar galería (demo)</button></div></section>';
+    '<div class="section-bar"><label>Subir fotografía desde equipo<input type="file" id="home-photo-file" accept="image/jpeg,image/png,image/webp,image/avif"></label></div>'+
+    '<div class="footer-actions"><button class="btn" data-action="save-home">Guardar galería</button></div></section>';
 }
 function renderSettings() {
-  return header("Datos de demostración","Exporta una copia de las pruebas o reinicia el prototipo.")+
-    '<section class="panel"><h2>Exportar e importar</h2><p class="muted">Estos datos son locales. No sirven como respaldo de inventario real ni actualizan la página pública.</p>'+
-    '<div class="two-buttons"><button class="btn" data-action="export-data">Exportar JSON</button>'+
-    '<label>Importar JSON<input type="file" id="import-data" accept="application/json,.json"></label></div></section>'+
-    '<section class="panel"><h2>Conexión futura</h2><p class="muted">Pendiente: Auth de Supabase, Storage, API y migración de los productos aprobados.</p>'+
-    '<p class="muted">No se han creado usuarios ni tablas, y no se ha configurado ningún token secreto en esta demo.</p></section>'+
-    '<section class="panel"><h2>Reiniciar datos de prueba</h2><p class="muted">Regresar a los ejemplos de la rama original.</p>'+
-    '<button class="btn btn-danger" data-action="reset-demo">Reiniciar prototipo</button></section>';
+  return header("Cuenta y seguridad","Tu sesión y la conexión protegida con Supabase PERSONAL.")+
+    '<section class="panel"><h2>Cuenta autorizada</h2>'+
+    '<p class="muted">Sesión: '+esc(authorizedEmail)+'</p>'+
+    '<p class="muted">Proyecto Supabase: '+esc(api.projectRef)+'. Todas las escrituras están protegidas por RLS.</p>'+
+    '<p class="muted">Los pedidos por WhatsApp no descuentan el inventario. Las cantidades solo cambian al editar el producto.</p>'+
+    '<button class="btn btn-outline" data-action="export-data">Exportar catálogo JSON</button> '+
+    '<button class="btn btn-danger" data-action="sign-out">Cerrar sesión</button></section>';
 }
 function render() {
   document.getElementById("subtitle").textContent = TITLES[view];
@@ -237,17 +226,22 @@ function validateProduct(p) {
     return "Para activar un producto, agrega al menos una foto y una variante";
   return null;
 }
-function saveProduct() {
-  collectProduct();const err=validateProduct(draft);if(err)return notify(err);
-  if (!draft.slug || !db.products.some(p=>p.id===draft.id)) {
-    const base=slugify(draft.name);let slug=base,i=2;
+async function saveProduct() {
+  collectProduct();
+  const err=validateProduct(draft);
+  if(err)return notify(err);
+  if(!draft.slug || !db.products.some(p=>p.id===draft.id)){
+    const base=slugify(draft.name);
+    let slug=base,i=2;
     while(db.products.some(p=>p.slug===slug&&p.id!==draft.id))slug=base+"-"+i++;
     draft.slug=slug;
   }
-  const idx=db.products.findIndex(p=>p.id===draft.id);
-  if (idx>=0)db.products[idx]=deepCopy(draft);else db.products.push(deepCopy(draft));
-  if (!save()) return;
-  editing=false;draft=null;render();notify("Producto guardado solo en esta demo");
+  try{
+    await api.saveProduct(draft);
+    await loadData();
+    editing=false;draft=null;render();
+    notify("Producto guardado correctamente en Supabase");
+  }catch(error){notify("No se guardó: "+error.message);}
 }
 function collectHome() {
   document.querySelectorAll("[data-home-row]").forEach(row=>{
@@ -258,23 +252,22 @@ function collectHome() {
     });
   });
 }
-function saveHome() {
+async function saveHome() {
   collectHome();
-  if(homeDraft.some(x=>x.src&&!safeImg(x.src)))return notify("Hay una URL de imagen no permitida");
-  db.home[homeTab] = deepCopy(homeDraft.map((m,i)=>({...m,sortOrder:i})));
-  if(save())notify("Galería guardada solo en este navegador");
+  if(homeDraft.some(x=>x.src&&!safeImg(x.src)))return notify("Hay una imagen con URL no permitida");
+  try{
+    await api.saveHomeSection(homeTab,homeDraft.map((m,i)=>({...m,sortOrder:i})),db.home[homeTab]);
+    await loadData();
+    homeDraft=deepCopy(db.home[homeTab]);render();
+    notify("Galería guardada en Supabase");
+  }catch(error){notify("Error al guardar la galería: "+error.message);}
 }
-function fileAsImage(file) {
-  if(!file)return Promise.reject(new Error("Selecciona una imagen"));
-  if(!["image/png","image/jpeg","image/webp","image/avif"].includes(file.type))
-    return Promise.reject(new Error("Formato no permitido"));
-  if(file.size>350000)return Promise.reject(new Error("Máximo 350 KB por imagen en esta demo local"));
-  return new Promise((resolve,reject)=>{
-    const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));
-    reader.onerror=()=>reject(new Error("No se pudo leer la imagen"));reader.readAsDataURL(file);
-  });
+async function fileAsImage(file,folder) {
+  if(!file)throw Error("Selecciona una fotografía");
+  const result=await api.uploadImage(file,folder);
+  return result.src;
 }
-document.addEventListener("click", e=>{
+document.addEventListener("click", async e=>{
   const nav=e.target.closest("[data-view]");if(nav){go(nav.dataset.view);return;}
   const el=e.target.closest("[data-action]");if(!el)return;
   const action=el.dataset.action,idx=Number(el.dataset.index);
@@ -287,10 +280,12 @@ document.addEventListener("click", e=>{
   if(action==="remove-variant"){collectProduct();draft.variants.splice(idx,1);return render();}
   if(action==="add-image"){collectProduct();draft.images.push({id:uid(),src:"",alt:""});return render();}
   if(action==="remove-image"){collectProduct();draft.images.splice(idx,1);return render();}
-  if(action==="delete-product") {
+  if(action==="delete-product"){
     const p=db.products.find(p=>p.id===el.dataset.id);
-    if(!p||!confirm('¿Archivar "'+p.name+'"? El producto permanecerá en la demo.'))return;
-    p.status="archived";if(save()){render();notify("Producto archivado (demo)");}
+    if(!p||!confirm('¿Archivar "'+p.name+'"? Dejará de verse en la tienda de pruebas.'))return;
+    try{await api.archiveProduct(p.id);await loadData();render();notify("Producto archivado en Supabase");}
+    catch(error){notify("No se pudo archivar: "+error.message);}
+    return;
   }
   if(action==="home-tab"){collectHome();homeTab=el.dataset.section;homeDraft=deepCopy(db.home[homeTab]);return render();}
   if(action==="add-home"){collectHome();homeDraft.push(blankMedia());return render();}
@@ -306,9 +301,10 @@ document.addEventListener("click", e=>{
     const url=URL.createObjectURL(blob),link=document.createElement("a");
     link.href=url;link.download="everywear-demo.json";link.click();URL.revokeObjectURL(url);
   }
-  if(action==="reset-demo") {
-    if(!confirm("¿Eliminar tus pruebas locales y volver a los datos originales?"))return;
-    db=makeFixtures();if(save()){editing=false;go("dashboard");notify("Demo reiniciada");}
+  if(action==="sign-out"){
+    api.signOut();
+    showLogin("Sesión cerrada");
+    return;
   }
 });
 document.addEventListener("submit",e=>{
@@ -322,19 +318,45 @@ document.addEventListener("change",async e=>{
   const id=e.target.id;
   if(id==="product-photo-file" || id==="home-photo-file"){
     try {
-      const src=await fileAsImage(e.target.files?.[0]);
+      const src=await fileAsImage(e.target.files?.[0],id==="product-photo-file"?"products":"home");
       if(id==="product-photo-file"){collectProduct();draft.images.push({id:uid(),src,alt:draft.name});}
       else {collectHome();homeDraft.push({...blankMedia(),src});}
       render();notify("Imagen agregada a la demo. Guarda para conservarla.");
     } catch(error){notify(error.message);}
   }
-  if(id==="import-data"){
-    try{
-      const file=e.target.files?.[0];if(!file||file.size>4000000)throw new Error("Archivo inválido o demasiado grande");
-      const data=JSON.parse(await file.text());if(!validateShape(data))throw new Error("Formato de demo incompatible");
-      if(!confirm("¿Reemplazar los datos de demostración actuales?"))return;
-      const old=db;db=data;if(save()){go("dashboard");notify("Datos de prueba importados");}else db=old;
-    }catch(error){notify(error.message);}
-  }
+
 });
-render();
+const loginScreen=document.getElementById("login-screen");
+const appShell=document.querySelector(".app-shell");
+function showLogin(message="") {
+  appShell.hidden=true;
+  loginScreen.hidden=false;
+  loginScreen.querySelector(".auth-message").textContent=message;
+  db.products=[];db.home={tv:[],lookbook:[],hero:[]};
+}
+async function initialize() {
+  if(!api.configured)return showLogin("Supabase no está configurado para este despliegue.");
+  const user=await api.checkAdmin();
+  if(!user){
+    return showLogin("Inicia sesión con una cuenta autorizada. Si ya has iniciado sesión, solicita que tu usuario se agregue a los administradores.");
+  }
+  authorizedEmail=user.email||"Administrador";
+  await loadData();
+  loginScreen.hidden=true;appShell.hidden=false;
+  render();
+}
+document.addEventListener("submit",async event=>{
+  if(event.target.id!=="login-form")return;
+  event.preventDefault();
+  const submit=event.target.querySelector('button[type="submit"]');
+  const fields=new FormData(event.target);
+  submit.disabled=true;
+  try{
+    await api.signIn(String(fields.get("email")||"").trim(),String(fields.get("password")||""));
+    event.target.querySelector('[name="password"]').value="";
+    await initialize();
+  }catch(error){showLogin("No se pudo iniciar sesión: "+error.message);}
+  finally{submit.disabled=false;}
+});
+initialize().catch(error=>showLogin("No se pudo cargar el panel: "+error.message));
+

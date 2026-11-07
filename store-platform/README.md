@@ -1,69 +1,56 @@
-# Everywear Full Store — fase 1
+# Everywear Studio — Preview con Supabase PERSONAL
 
-**Repositorio:** \`Luisrome01/everywear\`  
-**Rama de origen:** \`video-scroll-test\` (commit \`20d45492442cf8a2fb90ab2c1ce5b9a86fc6620a\`)  
-**Rama de trabajo:** \`everywhere-full-store-scroll-preview\`
+**Rama exclusiva de desarrollo:** `everywhere-full-store-scroll-preview`  
+**Render protegido:** https://everywear-full-store-preview.onrender.com  
+**Panel:** https://everywear-full-store-preview.onrender.com/store-platform/admin/  
+**Base de datos:** Supabase PERSONAL, proyecto `pzkspmqwdhcfyxrbndaa`. PROPORCA no participa.
 
-## Regla principal: preservar el diseño actual
-No se alteraron los archivos existentes de \`src/\`, \`public/\`, \`index.html\`, \`package.json\`, ni los recursos de scroll. Todo el avance se ubicó en la carpeta **\`store-platform/\`** de la nueva rama. No hay conexión a una base de datos, ni despliegue de producción.
+## Arquitectura
 
-## Lo creado
-- \`admin/index.html\`, \`admin/styles.css\`, \`admin/app.js\`: **panel de demostración** con dashboard, gestión de productos, variantes, stock, fotos, imágenes del Home, exportar/importar JSON y reinicio.
-- \`admin/fixtures.js\`: importa los productos, fotos de TV y lookbook originales para pruebas. No inventa cantidades de inventario; las marca como **sin definir**. Todos los productos comienzan como borradores.
-- \`catalog-adapter.js\`: adapta filas dinámicas a los objetos que consume el frontend actual; será útil al conectar la API.
-- \`supabase-repository.js\`: interfaz de repositorio para un futuro cliente Supabase autenticado. No está conectada al panel todavía.
-- \`schema-draft.sql\`: propuesta de SQL con tablas, política de roles, Storage y RLS. **No ejecutada**.
+El panel ya no guarda productos, fotos o inventarios en localStorage. Usa un cliente HTTP con Supabase Auth, la API REST de PostgreSQL y Storage. La sesión de usuario sí puede guardarse en el navegador para mantener el acceso.
 
-## Cómo probar el panel (solo local)
-Desde la raíz del repositorio:
+Las tablas creadas son:
+- `everywear_admins`: lista autorizada de usuarios.
+- `everywear_categories`: categorías configurables.
+- `everywear_products`: ficha, precio, estado de publicación y destacados.
+- `everywear_product_variants`: color, talla, existencias por combinación.
+- `everywear_product_images`: fotografías ordenadas de cada producto.
+- `everywear_home_media`: fotografías ordenadas de televisores, lookbook y hero.
 
-\`\`\`bash
-npm install
-npm run dev
-\`\`\`
+Migraciones canónicas: `migrations/001_everywear_relational_preview.sql` y `migrations/002_everywear_atomic_editor.sql`. Ambas se ejecutaron en PERSONAL. No vuelvas a ejecutarlas sin revisar el estado real. `schema-draft.sql` es solo un borrador histórico, **no es la estructura actual**.
 
-Abrir: **http://localhost:5173/store-platform/admin/**
+Las seis tablas tienen RLS habilitado. Las escrituras requieren usuario Auth con su UUID registrado en `everywear_admins`; el público solo puede leer productos activos y medios habilitados. El bucket público `everywear-media` permite leer fotos, pero subir/actualizar/eliminar exige ser administrador.
 
-El proyecto público se visualiza como siempre en \`http://localhost:5173/\`. El administrador es una ruta independiente que no se importa en el sitio actual.
+## Primer acceso — configuración obligatoria
 
-### Pruebas automáticas
-Desde la raíz del repositorio, ejecutar:
+1. Abre **Supabase PERSONAL → Authentication → Users** para el proyecto indicado y crea o invita al usuario real de la administradora. No registres contraseñas en GitHub ni en ChatGPT.
+2. Obtén su UUID real y agrégalo a la tabla de administradores desde el SQL Editor de ese mismo proyecto, previa verificación de identidad:
+   ```sql
+   insert into public.everywear_admins(user_id) values ('UUID_REAL_DEL_USUARIO');
+   ```
+3. Abre el panel privado (primero requerirá la contraseña temporal HTTP Basic de Render), luego inicia sesión con las credenciales de **Supabase Auth**. Son dos protecciones distintas.
+4. Crea productos, añade variantes color/talla/stock, sube fotografías desde el dispositivo, guarda y cambia a **Activo** para mostrarlos en el catálogo preview.
 
-```bash
-node --test store-platform/tests/adapters.test.mjs
-```
+No existe usuario Auth ni permisos concedidos automáticamente. No se debe compartir el correo/contraseña de la administradora en los commits.
 
-Estas pruebas validan los ejemplos originales, la traducción de productos a la forma del storefront y el filtrado/orden de fotografías. Las comprobaciones estáticas no sustituyen una prueba de navegador ni de Supabase.
+## Catálogo y límites actuales
 
-### Funciones de demostración
-1. **Productos:** crear, editar nombre, descripción, precio, categoría, etiqueta, estado y destacado; archivar un producto.
-2. **Tallas y colores:** agregar/eliminar variantes. El stock vacío significa *aún no registrado*, mientras \`0\` significa *agotado*. Se impiden duplicados color + talla.
-3. **Imágenes:** agregar URLs de fotos o seleccionar archivos locales de hasta 350 KB por foto para probar la interfaz.
-4. **Home:** gestionar independientemente las fotos de los tres televisores, lookbook y hero; editar URL, descripción, visibilidad y orden.
-5. **Datos:** guardar en localStorage del navegador, exportar/importar JSON de pruebas y volver a los ejemplos iniciales.
+- El storefront conserva las 8 tarjetas y la identidad visual existente como contenido editorial de respaldo. Los productos **activos** de Supabase se agregan y actualizan cuando tienen el mismo slug. Los borradores no se publican.
+- Las 10 fotografías de televisores y las 8 imágenes del lookbook originales están registradas en Supabase. Su edición administra el contenido sin modificar el motor de scroll.
+- El producto `producto-prueba-everywear` es ficticio y permanece en **Borrador**.
+- Pedidos enviados por WhatsApp **no** descuentan inventario. La venta no se confirma por abrir un enlace.
+- Las fotografías se guardan en Storage con una URL pública; eliminar una foto del producto quita su referencia, pero no borra automáticamente el archivo del bucket, para evitar eliminar medios compartidos.
+- Si la API no está disponible, el storefront recupera sus recursos editoriales originales.
 
-**ATENCIÓN:** Este panel **NO tiene autenticación**. No desplegarlo públicamente ni utilizarlo para administrar inventario real. La persistencia de la demo es local y susceptible a borrarse. El estado \`Activo\` dentro del panel no publica productos en Everywear.
+## Render
 
-## Arquitectura para la etapa con Supabase
-- **Auth:** acceso solamente a administradores aprobados en \`everywear_admins\`.
-- **PostgreSQL:** \`everywear_products\` (productos con variantes e imágenes) y \`everywear_home_media\` (galerías del Home).
-- **Storage:** bucket \`everywear-media\`; formatos y tamaños restringidos.
-- **Políticas RLS:** lectura pública de productos activos y fotos visibles; escrituras reservadas a administradores.
-- **Frontend:** el archivo \`src/app.js\` actual se conectará más adelante al adaptador dinámico, conservando su diseño y animaciones. Es necesario manejar carga, errores, borrados de productos y carritos antiguos.
+El servicio de preview mantiene `autoDeploy=off`, la rama aislada y la protección HTTP Basic. Variables de compilación Vite (solo clave **publicable**, no secreta):
+- `VITE_EW_SUPABASE_URL`
+- `VITE_EW_SUPABASE_PUBLISHABLE_KEY`
 
-La API inicial puede ser el **Data API** de Supabase (PostgREST), evitando desplegar un servidor propio para operaciones CRUD básicas.
+No usar claves `service_role`, secret keys, contraseñas administrativas ni credenciales Render en JavaScript público.
 
-## Pendientes de siguiente etapa
-- Revisar el diseño del esquema con los productos reales, permisos, catálogo y categorías definitivas.
-- Conectar Supabase y ejecutar SQL solo después de revisión, pruebas de seguridad y autorización.
-- Reemplazar el repositorio local del panel por el adaptador Supabase, añadir **pantalla de inicio de sesión**, carga real a Storage y manejo de errores.
-- Integrar datos dinámicos al frontend de \`video-scroll-test\` en esta rama, sin cambiar estilos ni efectos de scroll.
-- Cargar productos/precios/fotografías aprobados y validar cada variante.
-- Añadir registro de ventas o ajustes manuales para controlar stock: un pedido enviado por WhatsApp NO confirma una venta ni permite descontar automáticamente.
-- Pruebas de build y navegación, rendimiento, seguridad, UX móvil y despliegue de prueba independiente.
+## Verificaciones y pendientes
 
-### Seguridad
-La clave publicable del proyecto puede usarse en un cliente web **solo con RLS correctamente configurada**. Nunca se debe incluir una \`service_role\` ni una clave secreta en JavaScript público. La autorización debe comprobarse en la base de datos, no solo ocultando botones en el panel.
+Verificar en navegador con una cuenta Auth habilitada: crear, editar, subir y retirar fotos, archivar, publicar en preview y comprobar respuesta después de recargar. Las pruebas SQL de almacenamiento y RLS se pueden hacer por separado, pero **no sustituyen** la prueba con una sesión de administradora. La tienda pública de producción y PROPORCA no deben modificarse.
 
-### Estado de esta entrega
-La fase 1 es un **prototipo funcional de navegador y una base de integración**. No es todavía una API funcionando, una tienda sincronizada ni un administrador de producción.
