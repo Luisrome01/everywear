@@ -17,7 +17,7 @@ Las tablas creadas son:
 - `everywear_product_images`: fotografías ordenadas de cada producto.
 - `everywear_home_media`: fotografías ordenadas de televisores, lookbook y hero.
 
-Migraciones canónicas: `migrations/001_everywear_relational_preview.sql` y `migrations/002_everywear_atomic_editor.sql`. Ambas se ejecutaron en PERSONAL. No vuelvas a ejecutarlas sin revisar el estado real. `schema-draft.sql` es solo un borrador histórico, **no es la estructura actual**.
+Migraciones canónicas: `migrations/001_everywear_relational_preview.sql`, `migrations/002_everywear_atomic_editor.sql`, `migrations/003_everywear_anon_admin_policy_permission.sql`, `migrations/004_everywear_public_mutation_hardening.sql` y `migrations/005_everywear_split_write_policies.sql`. Todas se ejecutaron en PERSONAL. No vuelvas a ejecutarlas sin revisar el estado real. `schema-draft.sql` es solo un borrador histórico, **no es la estructura actual**.
 
 Las seis tablas tienen RLS habilitado. Las escrituras requieren usuario Auth con su UUID registrado en `everywear_admins`; el público solo puede leer productos activos y medios habilitados. El bucket público `everywear-media` permite leer fotos, pero subir/actualizar/eliminar exige ser administrador.
 
