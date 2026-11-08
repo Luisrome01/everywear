@@ -34,6 +34,8 @@ async function loadData() {
   });});
 }
 let view = "dashboard", query = "", editing = false, draft = null, homeTab = "tv", homeDraft = [];
+let productStatusFilter="all",productCategoryFilter="all",productSort="manual";
+let selectedCategoryId=null,categorySearch="",pendingCategorySelection=null;
 function notify(msg) {
   TOAST.textContent = msg; TOAST.classList.add("show");
   clearTimeout(notify.timer); notify.timer = setTimeout(()=>TOAST.classList.remove("show"),3500);
@@ -68,48 +70,103 @@ function renderDashboard() {
     '<p class="muted">Cada cambio se reflejará en la tienda al actualizarla.</p>'+
     '<button class="btn btn-outline" data-action="go-home">Editar imágenes</button></section></div>';
 }
-function productRows() {
-  const q=query.trim().toLowerCase();
-  const products=db.products.filter(p=>[p.name,...(p.categories||[p.category])].join(" ").toLowerCase().includes(q));
-  if(!products.length)return '<tr><td colspan="6"><div class="empty">No hay productos que coincidan con tu búsqueda.</div></td></tr>';
+function filteredProducts(){
+  const q=query.trim().toLocaleLowerCase("es");
+  let products=db.products.filter(p=>{
+    const matchesText=[p.name,...(p.categories||[p.category])].join(" ").toLocaleLowerCase("es").includes(q);
+    const matchesStatus=productStatusFilter==="all"||p.status===productStatusFilter;
+    const matchesCategory=productCategoryFilter==="all"||(p.categoryIds||[]).includes(productCategoryFilter);
+    return matchesText&&matchesStatus&&matchesCategory;
+  });
+  const ordered=products.slice();
+  if(productSort==="price-asc")ordered.sort((a,b)=>a.price-b.price);
+  if(productSort==="price-desc")ordered.sort((a,b)=>b.price-a.price);
+  if(productSort==="name-asc")ordered.sort((a,b)=>a.name.localeCompare(b.name,"es"));
+  if(productSort==="name-desc")ordered.sort((a,b)=>b.name.localeCompare(a.name,"es"));
+  if(productSort==="stock-asc"||productSort==="stock-desc"){
+    const sum=p=>(p.variants||[]).reduce((n,v)=>n+(Number(v.stock)||0),0);
+    ordered.sort((a,b)=>productSort==="stock-asc"?sum(a)-sum(b):sum(b)-sum(a));
+  }
+  return ordered;
+}
+function productRows(){
+  const products=filteredProducts(),allowOrder=productSort==="manual"&&productStatusFilter==="all"&&productCategoryFilter==="all"&&!query.trim();
+  if(!products.length)return '<tr><td colspan="6"><div class="empty">No hay productos para estos filtros.</div></td></tr>';
   return products.map(p=>{
     const known=(p.variants||[]).filter(v=>v.stock!==null&&v.stock!==undefined&&v.stock!=="");
     const qty=known.reduce((n,v)=>n+Number(v.stock||0),0);
     const stockLabel=known.length===(p.variants||[]).length?qty+" uds.":qty+" uds. + pendientes";
     const index=db.products.findIndex(item=>item.id===p.id);
-    return '<tr><td><div class="item-with-photo">'+imgMarkup(p.images?.[0]?.src,p.name)+
-      '<div><div class="product-title">'+esc(p.name)+'</div><div class="muted">'+
-      esc((p.categories||[p.category]).join(" · "))+'</div></div></div></td>'+
+    return '<tr class="product-clickable" tabindex="0" role="button" aria-label="Editar '+esc(p.name)+'" data-product-id="'+esc(p.id)+'">'+
+      '<td><div class="item-with-photo">'+imgMarkup(p.images?.[0]?.src,p.name)+
+      '<div><div class="product-title">'+esc(p.name)+'</div><div class="muted">'+esc((p.categories||[p.category]).join(" · "))+'</div></div></div></td>'+
       '<td>'+money(p.price)+'</td><td><span class="pill '+esc(p.status)+'">'+
       esc(({active:"Activo",draft:"Borrador",archived:"Archivado"})[p.status]||p.status)+'</span></td>'+
       '<td>'+esc((p.variants||[]).length)+'</td><td>'+esc(stockLabel)+'</td>'+
       '<td><div class="actions"><div class="sort-arrows">'+
-      '<button type="button" class="btn btn-outline btn-sm" data-action="move-product" data-id="'+esc(p.id)+'" data-direction="-1" '+(index===0?"disabled":"")+' title="Subir producto" aria-label="Subir producto">↑</button>'+
-      '<button type="button" class="btn btn-outline btn-sm" data-action="move-product" data-id="'+esc(p.id)+'" data-direction="1" '+(index===db.products.length-1?"disabled":"")+' title="Bajar producto" aria-label="Bajar producto">↓</button></div>'+
+      '<button type="button" class="btn btn-outline btn-sm" data-action="move-product" data-id="'+esc(p.id)+'" data-direction="-1" '+(!allowOrder||index===0?"disabled":"")+' title="Subir producto" aria-label="Subir producto">↑</button>'+
+      '<button type="button" class="btn btn-outline btn-sm" data-action="move-product" data-id="'+esc(p.id)+'" data-direction="1" '+(!allowOrder||index===db.products.length-1?"disabled":"")+' title="Bajar producto" aria-label="Bajar producto">↓</button></div>'+
       '<button class="btn btn-outline btn-sm" data-action="edit-product" data-id="'+esc(p.id)+'">Editar</button>'+
       '<button class="btn btn-outline btn-sm" data-action="archive-product" data-id="'+esc(p.id)+'">Archivar</button>'+
-      '<button class="btn btn-danger btn-sm" data-action="delete-permanent" data-id="'+esc(p.id)+'">Eliminar</button>'+
-      '</div></td></tr>';
+      '<button class="btn btn-danger btn-sm" data-action="delete-permanent" data-id="'+esc(p.id)+'">Eliminar</button></div></td></tr>';
   }).join("");
 }
-function renderProducts() {
+function renderProducts(){
   if(editing)return renderProductEditor();
-  return header("Catálogo de productos","Organiza tu colección y cambia el orden con las flechas de cada artículo.",
+  return header("Catálogo de productos","Toca una fila para editar una prenda o usa los filtros para encontrarla.",
     '<button class="btn" data-action="new-product">+ Nuevo producto</button>')+
-    '<section class="panel"><div class="toolbar"><input id="search-products" type="search" placeholder="Buscar por nombre o categoría…" value="'+esc(query)+'">'+
-    '<span class="muted">'+db.products.length+' productos en tu colección</span></div>'+
+    '<section class="panel"><div class="product-filters">'+
+    '<label class="filter-field filter-search">Buscar<input id="search-products" type="search" placeholder="Nombre o categoría…" value="'+esc(query)+'"></label>'+
+    '<label class="filter-field">Estado<select id="filter-status">'+
+    [['all','Todos'],['active','Activos'],['draft','Borradores'],['archived','Archivados']].map(([value,label])=>
+      '<option value="'+value+'" '+(productStatusFilter===value?'selected':'')+'>'+label+'</option>').join("")+'</select></label>'+
+    '<label class="filter-field">Categoría<select id="filter-category"><option value="all">Todas</option>'+
+    db.categories.map(c=>'<option value="'+esc(c.id)+'" '+(productCategoryFilter===c.id?'selected':'')+'>'+esc(c.name)+'</option>').join("")+'</select></label>'+
+    '<label class="filter-field">Ordenar<select id="filter-sort">'+
+    [['manual','Orden de la tienda'],['price-asc','Menor precio'],['price-desc','Mayor precio'],['name-asc','Nombre A–Z'],['name-desc','Nombre Z–A'],['stock-asc','Menos existencias'],['stock-desc','Más existencias']].map(([value,label])=>
+      '<option value="'+value+'" '+(productSort===value?'selected':'')+'>'+label+'</option>').join("")+'</select></label>'+
+    '<button type="button" class="btn btn-outline btn-sm filter-reset" data-action="clear-filters">Limpiar filtros</button></div>'+
+    '<div class="result-counter" id="product-count">'+filteredProducts().length+' de '+db.products.length+' productos</div>'+
     '<div class="table-wrap"><table><thead><tr><th>Artículo</th><th>Precio</th><th>Estado</th><th>Variantes</th><th>Inventario</th><th>Orden y acciones</th></tr></thead>'+
-    '<tbody id="product-rows">'+productRows()+'</tbody></table></div></section>';
+    '<tbody id="product-rows">'+productRows()+'</tbody></table></div>'+
+    '<p class="help">Las flechas de orden se habilitan cuando no hay filtros aplicados y está seleccionado “Orden de la tienda”.</p></section>';
+}
+function categoryProducts(categoryId){
+  return db.products.filter(p=>(p.categoryIds||[]).includes(categoryId));
 }
 function renderCategories(){
-  return header("Categorías","Crea las secciones que mejor describen tu colección.")+
+  const current=db.categories.find(c=>c.id===selectedCategoryId);
+  if(current){
+    const q=categorySearch.trim().toLocaleLowerCase("es");
+    const matches=db.products.filter(p=>p.name.toLocaleLowerCase("es").includes(q));
+    return header("Editar categoría","Cambia el nombre sin perder los productos que ya pertenecen a ella.",
+      '<button class="btn btn-outline" data-action="back-categories">← Todas las categorías</button>')+
+      '<section class="panel"><form id="rename-category-form" class="category-create">'+
+      '<label>Nombre de la categoría<input name="name" required minlength="2" maxlength="80" value="'+esc(current.name)+'"></label>'+
+      '<button type="submit" class="btn">Guardar nombre</button></form>'+
+      '<div class="section-bar"><h3>Productos de esta categoría</h3><span class="muted">'+categoryProducts(current.id).length+' asociados</span></div>'+
+      '<p class="help">Marca los productos que quieras agregar. Desmarca los que ya no deban pertenecer a esta categoría.</p>'+
+      '<label class="filter-field">Buscar producto<input type="search" id="category-product-search" value="'+esc(categorySearch)+'" placeholder="Buscar en la colección…"></label>'+
+      '<form id="category-products-form"><div class="category-products-list">'+matches.map(p=>
+        '<label class="category-product-option"><input type="checkbox" name="productIds" value="'+esc(p.id)+'" '+((pendingCategorySelection?pendingCategorySelection.has(p.id):(p.categoryIds||[]).includes(current.id))?'checked':'')+'>'+
+        imgMarkup(p.images?.[0]?.src,p.name,"category-mini-photo")+
+        '<span><strong>'+esc(p.name)+'</strong><small>'+esc(p.status==="active"?"Activo":p.status==="archived"?"Archivado":"Borrador")+' · '+money(p.price)+'</small></span></label>').join("")+
+      (matches.length?'':'<div class="empty">No se encontraron productos.</div>')+
+      '</div><div class="footer-actions"><button type="submit" class="btn">Guardar productos asociados</button></div></form>'+
+      '<div class="category-danger"><span>¿Ya no necesitas esta categoría? Solo podrás eliminarla si ningún producto queda sin categoría.</span>'+
+      '<button type="button" class="btn btn-danger" data-action="remove-category" data-id="'+esc(current.id)+'">Eliminar categoría</button></div></section>';
+  }
+  return header("Categorías","Gestiona tus colecciones y los productos asociados a cada una.")+
     '<section class="panel"><form id="category-form" class="category-create">'+
     '<label>Nombre de la categoría<input name="name" maxlength="80" minlength="2" required placeholder="Ej. Jeans"></label>'+
     '<button class="btn" type="submit">+ Crear categoría</button></form>'+
-    '<p class="help">Una categoría se crea una sola vez y podrás asignarla a todas las prendas que quieras.</p>'+
-    '<div class="category-list">'+db.categories.map(c=>
-    '<span class="category-tag">'+esc(c.name)+'</span>').join("")+'</div></section>';
+    '<div class="table-wrap"><table class="category-table"><thead><tr><th>Categoría</th><th>Productos asociados</th><th>Acción</th></tr></thead>'+
+    '<tbody>'+db.categories.map(c=>'<tr class="category-clickable" data-category-id="'+esc(c.id)+'" tabindex="0" role="button" aria-label="Abrir categoría '+esc(c.name)+'">'+
+    '<td><strong>'+esc(c.name)+'</strong></td><td>'+categoryProducts(c.id).length+' productos</td>'+
+    '<td><button type="button" class="btn btn-outline btn-sm" data-action="open-category" data-id="'+esc(c.id)+'">Ver y editar</button></td></tr>').join("")+
+    '</tbody></table></div></section>';
 }
+
 function colorGroups() {
   const groups=[];
   draft.variants.forEach((v,i)=>{
@@ -207,6 +264,7 @@ function render() {
 }
 function go(next) {
   view = next; editing=false;draft=null;
+  if(next==="categories"){selectedCategoryId=null;categorySearch="";pendingCategorySelection=null;}
   if (view==="home") homeDraft = deepCopy(db.home[homeTab]);
   render(); window.scrollTo({top:0,behavior:"instant"});
 }
@@ -310,9 +368,26 @@ async function fileAsImage(file,folder) {
 }
 document.addEventListener("click", async e=>{
   const nav=e.target.closest("[data-view]");if(nav){go(nav.dataset.view);return;}
-  const el=e.target.closest("[data-action]");if(!el)return;
+  const el=e.target.closest("[data-action]");
+  if(!el){
+    const productRow=e.target.closest("[data-product-id]");
+    if(productRow){startEdit(productRow.dataset.productId);return;}
+    const categoryRow=e.target.closest("[data-category-id]");
+    if(categoryRow){selectedCategoryId=categoryRow.dataset.categoryId;categorySearch="";pendingCategorySelection=null;render();return;}
+    return;
+  }
   const action=el.dataset.action,idx=Number(el.dataset.index);
   if(action==="go-products")return go("products");
+  if(action==="clear-filters"){query="";productStatusFilter="all";productCategoryFilter="all";productSort="manual";return render();}
+  if(action==="open-category"){selectedCategoryId=el.dataset.id;categorySearch="";pendingCategorySelection=null;return render();}
+  if(action==="back-categories"){selectedCategoryId=null;categorySearch="";pendingCategorySelection=null;return render();}
+  if(action==="remove-category"){
+    const category=db.categories.find(c=>c.id===el.dataset.id);if(!category)return;
+    if(!confirm('¿Eliminar la categoría "'+category.name+'"? Los productos conservarán sus otras categorías.'))return;
+    try{await api.deleteCategory(category.id);selectedCategoryId=null;await loadData();render();notify("Categoría eliminada");}
+    catch(error){notify("No se pudo eliminar: "+error.message);}
+    return;
+  }
   if(action==="go-home")return go("home");
   if(action==="go-categories")return go("categories");
   if(action==="new-product")return startEdit(null);
@@ -382,6 +457,23 @@ document.addEventListener("click", async e=>{
   }
 });
 document.addEventListener("submit",e=>{
+  if(e.target.id==="rename-category-form"){
+    e.preventDefault();
+    const id=selectedCategoryId,name=String(new FormData(e.target).get("name")||"").trim();
+    if(db.categories.some(c=>c.id!==id&&c.name.trim().toLocaleLowerCase("es")===name.toLocaleLowerCase("es")))return notify("Ya existe una categoría con ese nombre");
+    api.renameCategory(id,name).then(()=>loadData()).then(()=>{render();notify("Nombre actualizado sin perder productos");})
+      .catch(error=>notify("No se pudo renombrar: "+error.message));return;
+  }
+  if(e.target.id==="category-products-form"){
+    e.preventDefault();
+    const id=selectedCategoryId;
+    // Search hides some rows; preserve their current category membership.
+    const visibleIds=new Set(Array.from(e.target.querySelectorAll('[name="productIds"]')).map(input=>input.value));
+    const chosen=new Set(pendingCategorySelection || db.products.filter(p=>(p.categoryIds||[]).includes(id)&&!visibleIds.has(p.id)).map(p=>p.id));
+    for(const input of e.target.querySelectorAll('[name="productIds"]:checked'))chosen.add(input.value);
+    api.setCategoryProducts(id,[...chosen]).then(()=>loadData()).then(()=>{pendingCategorySelection=null;render();notify("Productos asociados actualizados");})
+      .catch(error=>notify("No se pudieron actualizar los productos: "+error.message));return;
+  }
   if(e.target.id!=="product-form"&&e.target.id!=="category-form")return;
   if(e.target.id==="category-form"){
     e.preventDefault();const name=String(new FormData(e.target).get("name")||"").trim();
@@ -393,7 +485,30 @@ document.addEventListener("submit",e=>{
   e.preventDefault();saveProduct();
 });
 document.addEventListener("input",e=>{
-  if(e.target.id==="search-products"){query=e.target.value;const target=document.getElementById("product-rows");if(target)target.innerHTML=productRows();}
+  if(e.target.id==="search-products"){
+    query=e.target.value;
+    document.getElementById("product-rows").innerHTML=productRows();
+    document.getElementById("product-count").textContent=filteredProducts().length+" de "+db.products.length+" productos";
+  }
+  if(e.target.id==="category-product-search"){
+    categorySearch=e.target.value;
+    // Re-render on search while keeping selections (including unsaved ones).
+    const form=document.getElementById("category-products-form");
+    if(form){
+      pendingCategorySelection=new Set(db.products.filter(p=>(p.categoryIds||[]).includes(selectedCategoryId)).map(p=>p.id));
+      for(const box of form.querySelectorAll('[name="productIds"]')){
+        if(box.checked)pendingCategorySelection.add(box.value);
+        else pendingCategorySelection.delete(box.value);
+      }
+    }
+    const caret=e.target.selectionStart;render();
+    const field=document.getElementById("category-product-search");field?.focus();field?.setSelectionRange(caret,caret);
+  }
+});
+document.addEventListener("change",e=>{
+  if(e.target.id==="filter-status"){productStatusFilter=e.target.value;render();}
+  if(e.target.id==="filter-category"){productCategoryFilter=e.target.value;render();}
+  if(e.target.id==="filter-sort"){productSort=e.target.value;render();}
 });
 document.addEventListener("change",async e=>{
   const id=e.target.id;
@@ -432,6 +547,33 @@ async function initialize() {
   loginScreen.hidden=true;appShell.hidden=false;
   render();
 }
+document.addEventListener("click",event=>{
+  const button=event.target.closest("#toggle-password");
+  if(!button)return;
+  const input=document.getElementById("login-password");
+  const shown=input.type==="password";
+  input.type=shown?"text":"password";
+  button.setAttribute("aria-pressed",String(shown));
+  button.setAttribute("aria-label",shown?"Ocultar contraseña":"Mostrar contraseña");
+  button.title=shown?"Ocultar contraseña":"Mostrar contraseña";
+  button.innerHTML=shown?
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A10.9 10.9 0 0 1 12 5c5.2 0 9 7 9 7a15 15 0 0 1-3.4 4.3M6.2 6.2C3.9 7.8 3 12 3 12s3.8 7 9 7a10 10 0 0 0 4.3-.9"/></svg>':
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.2 12s3.7-7 9.8-7 9.8 7 9.8 7-3.7 7-9.8 7-9.8-7-9.8-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  input.focus({preventScroll:true});
+});
+document.addEventListener("keydown",event=>{
+  if(!["Enter"," "].includes(event.key)||event.target.closest("button,input,select,textarea"))return;
+  const productRow=event.target.closest("[data-product-id]");
+  if(productRow){event.preventDefault();startEdit(productRow.dataset.productId);return;}
+  const categoryRow=event.target.closest("[data-category-id]");
+  if(categoryRow){event.preventDefault();selectedCategoryId=categoryRow.dataset.categoryId;pendingCategorySelection=null;render();}
+});
+document.addEventListener("change",event=>{
+  const box=event.target;
+  if(box.matches('#category-products-form [name="productIds"]') && pendingCategorySelection){
+    if(box.checked)pendingCategorySelection.add(box.value);else pendingCategorySelection.delete(box.value);
+  }
+});
 document.addEventListener("submit",async event=>{
   if(event.target.id!=="login-form")return;
   event.preventDefault();
