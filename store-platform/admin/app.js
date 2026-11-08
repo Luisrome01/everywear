@@ -321,7 +321,7 @@ document.addEventListener("click", async e=>{
   if(action==="add-color"){
     collectProduct();let number=1;
     while(draft.variants.some(v=>v.color==="Color "+number))number++;
-    draft.variants.push({id:uid(),color:"Color "+number,hex:"#777777",size:"Única",stock:null});return render();
+    draft.variants.push({id:uid(),color:"Color "+number,hex:"#777777",size:"",stock:null});return render();
   }
   if(action==="add-size"){
     collectProduct();const base=draft.variants[idx];if(!base)return;
