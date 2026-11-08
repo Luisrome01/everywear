@@ -18,7 +18,13 @@
       <p>Accede para administrar productos, inventario y contenido de tu tienda. Solo usuarios autorizados.</p>
       <form id="login-form">
         <label>Correo electrónico<input type="email" name="email" required autocomplete="username" placeholder="correo@ejemplo.com"></label>
-        <label>Contraseña<input type="password" name="password" required autocomplete="current-password" placeholder="Tu contraseña"></label>
+        <label for="login-password">Contraseña</label>
+        <div class="password-field">
+          <input id="login-password" type="password" name="password" required autocomplete="current-password" placeholder="Tu contraseña">
+          <button type="button" id="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false" title="Mostrar contraseña">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.2 12s3.7-7 9.8-7 9.8 7 9.8 7-3.7 7-9.8 7-9.8-7-9.8-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
         <button type="submit" class="btn">Iniciar sesión <span aria-hidden="true">↗</span></button>
       </form>
       <p class="auth-message" aria-live="polite"></p>
