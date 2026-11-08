@@ -81,15 +81,42 @@ export function normalizeProduct(p){
   };
 }
 const fullSelect="select=*,everywear_product_variants(*),everywear_product_images(*)&order=sort_order.asc";
+async function categoryAssignments(admin=false){
+  return rawRequest("/rest/v1/everywear_product_categories?select=product_id,category_id,everywear_categories(name)","GET",null,admin);
+}
+function attachCategories(products,assignments){
+  return products.map(p=>{
+    const matches=assignments.filter(x=>x.product_id===p.id);
+    return {...p,
+      categoryIds:matches.map(x=>x.category_id),
+      categories:matches.map(x=>x.everywear_categories?.name).filter(Boolean).length
+        ? matches.map(x=>x.everywear_categories?.name).filter(Boolean):[p.category]
+    };
+  });
+}
+export async function listCategories(admin=false){
+  return rawRequest("/rest/v1/everywear_categories?select=*&order=sort_order.asc,name.asc","GET",null,admin);
+}
+export async function createCategory(name){
+  return rawRequest("/rest/v1/everywear_categories","POST",
+    {name:name.trim(),sort_order:0},true,{Prefer:"return=representation"});
+}
 export async function listProducts(){
-  return (await rawRequest("/rest/v1/everywear_products?"+fullSelect,"GET",null,true)).map(normalizeProduct);
+  const [products,assignments]=await Promise.all([
+    rawRequest("/rest/v1/everywear_products?"+fullSelect,"GET",null,true),
+    categoryAssignments(true)]);
+  return attachCategories(products.map(normalizeProduct),assignments);
 }
 export async function listPublicProducts(){
-  return (await rawRequest("/rest/v1/everywear_products?"+fullSelect+"&status=eq.active","GET")).map(normalizeProduct);
+  const [products,assignments]=await Promise.all([
+    rawRequest("/rest/v1/everywear_products?"+fullSelect+"&status=eq.active","GET"),
+    categoryAssignments()]);
+  return attachCategories(products.map(normalizeProduct),assignments);
 }
 export async function saveProduct(product){
   const payload={
     id:product.id,slug:product.slug,name:product.name,category:product.category,
+    categoryIds:product.categoryIds,
     description:product.description,price:product.price,status:product.status,
     featured:product.featured,tag:product.tag,sortOrder:product.sortOrder,
     images:(product.images||[]).map(i=>({src:i.src,alt:i.alt||""})),
@@ -97,6 +124,15 @@ export async function saveProduct(product){
       stock:v.stock,sortOrder:i}))
   };
   return rawRequest("/rest/v1/rpc/everywear_save_product","POST",{payload},true);
+}
+export async function deleteProduct(id){
+  return rawRequest("/rest/v1/rpc/everywear_delete_product","POST",{p_product_id:id},true);
+}
+export async function reorderProducts(products){
+  for(let i=0;i<products.length;i++){
+    await rawRequest("/rest/v1/everywear_products?id=eq."+encodeURIComponent(products[i].id),
+      "PATCH",{sort_order:i},true,{Prefer:"return=minimal"});
+  }
 }
 export async function archiveProduct(id){
   return rawRequest("/rest/v1/everywear_products?id=eq."+encodeURIComponent(id),"PATCH",
@@ -139,7 +175,7 @@ export function publicProduct(p){
   }
   const sizes=[...new Set(p.variants.map(v=>v.size))].filter(x=>x!=="Única");
   return {
-    id:p.id,slug:p.slug,name:p.name,category:p.category,price:p.price,
+    id:p.id,slug:p.slug,name:p.name,category:p.category,categories:p.categories,price:p.price,
     description:p.description,tag:p.tag,
     image:p.images[0]?.src||"/brand/bag.webp",
     images:p.images.map(i=>i.src),colors:[...colors.values()],sizes,
