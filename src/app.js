@@ -271,7 +271,7 @@ function home() {
 }
 
 function filteredProducts() {
-  let list = PRODUCTS.filter(p => (state.category === "Todos" || p.category === state.category) && (p.name + " " + p.category).toLowerCase().includes(state.search.toLowerCase().trim()));
+  let list = PRODUCTS.filter(p => (state.category === "Todos" || (p.categories||[p.category]).includes(state.category)) && (p.name + " " + p.category).toLowerCase().includes(state.search.toLowerCase().trim()));
   if (state.sort === "low") list.sort((a,b) => a.price - b.price);
   if (state.sort === "high") list.sort((a,b) => b.price - a.price);
   if (state.sort === "name") list.sort((a,b) => a.name.localeCompare(b.name, "es"));
@@ -649,7 +649,7 @@ async function bootEverywearStore() {
       // Empty active results must remain empty (not resurrect archived demos).
       PRODUCTS.splice(0, PRODUCTS.length,
         ...products.map(row=>({...publicProduct(row),id:row.slug||row.id})));
-      const categories=[...new Set(PRODUCTS.map(p=>p.category).filter(Boolean))];
+      const categories=[...new Set(PRODUCTS.flatMap(p=>p.categories||[p.category]).filter(Boolean))];
       CATEGORIES.splice(0,CATEGORIES.length,"Todos",...categories);
       const tv = media.filter(m => m.section === "tv").sort((a,b)=>a.sort_order-b.sort_order);
       if(tv.length)TV_PHOTOS.splice(0,TV_PHOTOS.length,...tv.map(m=>({src:m.src,alt:m.alt||""})));
