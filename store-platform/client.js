@@ -101,6 +101,16 @@ export async function createCategory(name){
   return rawRequest("/rest/v1/everywear_categories","POST",
     {name:name.trim(),sort_order:0},true,{Prefer:"return=representation"});
 }
+export async function renameCategory(id,name){
+  return rawRequest("/rest/v1/rpc/everywear_rename_category","POST",{p_id:id,p_name:name.trim()},true);
+}
+export async function setCategoryProducts(id,productIds){
+  return rawRequest("/rest/v1/rpc/everywear_set_category_products","POST",
+    {p_category_id:id,p_product_ids:productIds},true);
+}
+export async function deleteCategory(id){
+  return rawRequest("/rest/v1/rpc/everywear_delete_category","POST",{p_id:id},true);
+}
 export async function listProducts(){
   const [products,assignments]=await Promise.all([
     rawRequest("/rest/v1/everywear_products?"+fullSelect,"GET",null,true),
