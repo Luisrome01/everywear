@@ -197,3 +197,17 @@ button{touch-action:manipulation}
 .ew-dialog-actions .btn-danger:hover{background:#652239;border-color:#652239}
 .ew-dialog-actions button:disabled{cursor:progress;opacity:.6}
 @media(max-width:400px){.ew-dialog-actions{grid-template-columns:1fr}.ew-dialog-actions .btn-outline{order:2}.ew-dialog-actions .btn-danger{order:1}}
+
+/* Everywear Studio – feedback for saves and uploads */
+.studio-loading[hidden]{display:none!important}
+.studio-loading{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:20px;background:rgba(34,18,26,.38);backdrop-filter:blur(3px)}
+.studio-loading-card{width:min(92vw,360px);padding:36px 28px 32px;border:1px solid #ead8d7;border-radius:20px;background:#fffaf5;box-shadow:0 24px 75px #341b2a35;text-align:center;display:flex;align-items:center;flex-direction:column;gap:13px}
+.studio-loading-mark{width:66px;height:66px;display:grid;place-items:center;border-radius:50%;background:#f5e6e9;margin-bottom:4px}
+.studio-spinner{display:inline-block;flex-shrink:0;width:31px;height:31px;border:3px solid #ddbfca;border-top-color:#772e48;border-radius:50%;animation:studio-spinner-rotate .8s linear infinite}
+.studio-spinner-small{width:16px;height:16px;border-width:2px;border-color:#fff8;border-top-color:#fff;vertical-align:middle}
+.studio-loading-title{font:400 25px/1.25 Georgia,serif;color:#5f2a40}
+.studio-loading-detail{font:400 13px/1.6 system-ui,sans-serif;color:#8f737d;margin:0}
+.studio-is-loading{cursor:progress}
+@keyframes studio-spinner-rotate{to{transform:rotate(360deg)}}
+@media(max-width:500px){.studio-loading-card{padding:30px 22px}.studio-loading-title{font-size:23px}}
+@media(prefers-reduced-motion:reduce){.studio-spinner{animation-duration:1.4s}}
