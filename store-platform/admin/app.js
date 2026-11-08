@@ -36,6 +36,28 @@ async function loadData() {
 let view = "dashboard", query = "", editing = false, draft = null, homeTab = "tv", homeDraft = [];
 let productStatusFilter="all",productCategoryFilter="all",productSort="manual";
 let selectedCategoryId=null,categorySearch="",pendingCategorySelection=null;
+const loadingOverlay=document.getElementById("studio-loading");
+const loadingTitle=document.getElementById("studio-loading-title");
+const loadingDetail=document.getElementById("studio-loading-detail");
+let loadingActive=false;
+async function withLoading(title,detail,operation) {
+  if(loadingActive)return;
+  loadingActive=true;
+  loadingTitle.textContent=title;
+  loadingDetail.textContent=detail;
+  loadingOverlay.hidden=false;
+  loadingOverlay.setAttribute("aria-busy","true");
+  document.body.classList.add("studio-is-loading");
+  // Let the browser paint the indicator before beginning the network request.
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  try{return await operation();}
+  finally{
+    loadingOverlay.hidden=true;
+    loadingOverlay.setAttribute("aria-busy","false");
+    document.body.classList.remove("studio-is-loading");
+    loadingActive=false;
+  }
+}
 function notify(msg) {
   TOAST.textContent = msg; TOAST.classList.add("show");
   clearTimeout(notify.timer); notify.timer = setTimeout(()=>TOAST.classList.remove("show"),3500);
@@ -336,10 +358,12 @@ async function saveProduct() {
     draft.slug=slug;
   }
   try{
-    await api.saveProduct(draft);
-    await loadData();
-    editing=false;draft=null;render();
-    notify("Producto guardado correctamente");
+    await withLoading("Guardando producto…","Estamos actualizando tu colección.",async()=>{
+      await api.saveProduct(draft);
+      await loadData();
+      editing=false;draft=null;render();
+      notify("Producto guardado correctamente");
+    });
   }catch(error){notify("No se guardó: "+error.message);}
 }
 function collectHome() {
@@ -355,10 +379,12 @@ async function saveHome() {
   collectHome();
   if(homeDraft.some(x=>x.src&&!safeImg(x.src)))return notify("Hay una fotografía no válida");
   try{
-    await api.saveHomeSection(homeTab,homeDraft.map((m,i)=>({...m,sortOrder:i})),db.home[homeTab]);
-    await loadData();
-    homeDraft=deepCopy(db.home[homeTab]);render();
-    notify("Galería actualizada correctamente");
+    await withLoading("Guardando fotografías…","Estamos actualizando las imágenes de tu tienda.",async()=>{
+      await api.saveHomeSection(homeTab,homeDraft.map((m,i)=>({...m,sortOrder:i})),db.home[homeTab]);
+      await loadData();
+      homeDraft=deepCopy(db.home[homeTab]);render();
+      notify("Galería actualizada correctamente");
+    });
   }catch(error){notify("Error al guardar la galería: "+error.message);}
 }
 async function fileAsImage(file,folder) {
@@ -401,7 +427,7 @@ productDeleteConfirm.addEventListener("click",async()=>{
   if(!id||productDeleteConfirm.disabled)return;
   productDeleteConfirm.disabled=true;
   productDeleteCancel.disabled=true;
-  productDeleteConfirm.textContent="Eliminando…";
+  productDeleteConfirm.innerHTML='<span class="studio-spinner studio-spinner-small" aria-hidden="true"></span> Eliminando…';
   productDeleteError.hidden=true;
   try{
     await api.deleteProduct(id);
@@ -436,7 +462,9 @@ document.addEventListener("click", async e=>{
   if(action==="remove-category"){
     const category=db.categories.find(c=>c.id===el.dataset.id);if(!category)return;
     if(!confirm('¿Eliminar la categoría "'+category.name+'"? Los productos conservarán sus otras categorías.'))return;
-    try{await api.deleteCategory(category.id);selectedCategoryId=null;await loadData();render();notify("Categoría eliminada");}
+    try{await withLoading("Eliminando categoría…","Estamos actualizando tu colección.",async()=>{
+      await api.deleteCategory(category.id);selectedCategoryId=null;await loadData();render();notify("Categoría eliminada");
+    });}
     catch(error){notify("No se pudo eliminar: "+error.message);}
     return;
   }
@@ -469,7 +497,9 @@ document.addEventListener("click", async e=>{
     const start=db.products.findIndex(p=>p.id===el.dataset.id),end=start+Number(el.dataset.direction);
     if(start<0||end<0||end>=db.products.length)return;
     const reordered=db.products.slice();[reordered[start],reordered[end]]=[reordered[end],reordered[start]];
-    try{await api.reorderProducts(reordered);await loadData();render();notify("Orden actualizado");}
+    try{await withLoading("Ordenando productos…","Estamos guardando el nuevo orden.",async()=>{
+      await api.reorderProducts(reordered);await loadData();render();notify("Orden actualizado");
+    });}
     catch(error){await loadData();render();notify("No se pudo cambiar el orden: "+error.message);}
     return;
   }
@@ -481,7 +511,9 @@ document.addEventListener("click", async e=>{
   if(action==="archive-product"){
     const p=db.products.find(p=>p.id===el.dataset.id);
     if(!p||!confirm('¿Archivar "'+p.name+'"? Dejará de verse en la tienda de pruebas.'))return;
-    try{await api.archiveProduct(p.id);await loadData();render();notify("Producto archivado");}
+    try{await withLoading("Archivando producto…","Estamos actualizando el catálogo.",async()=>{
+      await api.archiveProduct(p.id);await loadData();render();notify("Producto archivado");
+    });}
     catch(error){notify("No se pudo archivar: "+error.message);}
     return;
   }
@@ -510,8 +542,9 @@ document.addEventListener("submit",e=>{
     e.preventDefault();
     const id=selectedCategoryId,name=String(new FormData(e.target).get("name")||"").trim();
     if(db.categories.some(c=>c.id!==id&&c.name.trim().toLocaleLowerCase("es")===name.toLocaleLowerCase("es")))return notify("Ya existe una categoría con ese nombre");
-    api.renameCategory(id,name).then(()=>loadData()).then(()=>{render();notify("Nombre actualizado sin perder productos");})
-      .catch(error=>notify("No se pudo renombrar: "+error.message));return;
+    withLoading("Guardando categoría…","Estamos actualizando su nombre.",async()=>{
+      await api.renameCategory(id,name);await loadData();render();notify("Nombre actualizado sin perder productos");
+    }).catch(error=>notify("No se pudo renombrar: "+error.message));return;
   }
   if(e.target.id==="category-products-form"){
     e.preventDefault();
@@ -520,16 +553,18 @@ document.addEventListener("submit",e=>{
     const visibleIds=new Set(Array.from(e.target.querySelectorAll('[name="productIds"]')).map(input=>input.value));
     const chosen=new Set(pendingCategorySelection || db.products.filter(p=>(p.categoryIds||[]).includes(id)&&!visibleIds.has(p.id)).map(p=>p.id));
     for(const input of e.target.querySelectorAll('[name="productIds"]:checked'))chosen.add(input.value);
-    api.setCategoryProducts(id,[...chosen]).then(()=>loadData()).then(()=>{pendingCategorySelection=null;render();notify("Productos asociados actualizados");})
-      .catch(error=>notify("No se pudieron actualizar los productos: "+error.message));return;
+    withLoading("Guardando asociaciones…","Estamos actualizando los productos de la categoría.",async()=>{
+      await api.setCategoryProducts(id,[...chosen]);await loadData();pendingCategorySelection=null;render();notify("Productos asociados actualizados");
+    }).catch(error=>notify("No se pudieron actualizar los productos: "+error.message));return;
   }
   if(e.target.id!=="product-form"&&e.target.id!=="category-form")return;
   if(e.target.id==="category-form"){
     e.preventDefault();const name=String(new FormData(e.target).get("name")||"").trim();
     if(name.length<2)return notify("Escribe un nombre de categoría");
     if(db.categories.some(c=>c.name.trim().toLowerCase()===name.toLowerCase()))return notify("Esa categoría ya existe");
-    api.createCategory(name).then(()=>loadData()).then(()=>{render();notify("Categoría creada");})
-      .catch(error=>notify("No se pudo crear la categoría: "+error.message));return;
+    withLoading("Creando categoría…","Estamos preparando tu nueva categoría.",async()=>{
+      await api.createCategory(name);await loadData();render();notify("Categoría creada");
+    }).catch(error=>notify("No se pudo crear la categoría: "+error.message));return;
   }
   e.preventDefault();saveProduct();
 });
@@ -567,14 +602,17 @@ document.addEventListener("change",async e=>{
     try {
       const files=Array.from(e.target.files||[]);
       if(id==="product-photo-file")collectProduct();else collectHome();
-      let uploaded=0;
-      for(const file of files){
-        const src=await fileAsImage(file,id==="product-photo-file"?"products":"home");
-        if(id==="product-photo-file")draft.images.push({id:uid(),src,alt:draft.name});
-        else homeDraft.push({...blankMedia(),src});
-        uploaded++;
-      }
-      render();notify(uploaded+" fotografía(s) cargada(s). Guarda los cambios para publicarlas.");
+      await withLoading("Subiendo fotografías…","Estamos preparando "+files.length+" imagen(es).",async()=>{
+        let uploaded=0;
+        for(const file of files){
+          loadingDetail.textContent="Fotografía "+(uploaded+1)+" de "+files.length;
+          const src=await fileAsImage(file,id==="product-photo-file"?"products":"home");
+          if(id==="product-photo-file")draft.images.push({id:uid(),src,alt:draft.name});
+          else homeDraft.push({...blankMedia(),src});
+          uploaded++;
+        }
+        render();notify(uploaded+" fotografía(s) cargada(s). Guarda los cambios para publicarlas.");
+      });
     } catch(error){notify(error.message);}
   }
 
@@ -632,9 +670,11 @@ document.addEventListener("submit",async event=>{
   const fields=new FormData(event.target);
   submit.disabled=true;
   try{
-    await api.signIn(String(fields.get("email")||"").trim(),String(fields.get("password")||""));
-    event.target.querySelector('[name="password"]').value="";
-    await initialize();
+    await withLoading("Iniciando sesión…","Estamos preparando tu espacio.",async()=>{
+      await api.signIn(String(fields.get("email")||"").trim(),String(fields.get("password")||""));
+      event.target.querySelector('[name="password"]').value="";
+      await initialize();
+    });
   }catch(error){showLogin("No se pudo iniciar sesión: "+error.message);}
   finally{submit.disabled=false;}
 });
