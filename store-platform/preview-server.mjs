@@ -112,11 +112,17 @@ function clientBucket(req){
   return (forwarded||req.socket.remoteAddress||"unknown").slice(0,100);
 }
 async function postAccess(req,res){
+  // Render can forward an internal Host header. Validate browser Origin against
+  // this deployment's fixed public origin instead of the proxy-supplied Host.
   const origin=req.headers.origin;
   if(origin){
-    try{if(new URL(origin).host!==req.headers.host){
+    try {
+      if(new URL(origin).origin!=="https://everywear-full-store-preview.onrender.com") {
+        res.writeHead(403);return res.end("Forbidden");
+      }
+    } catch {
       res.writeHead(403);return res.end("Forbidden");
-    }}catch{res.writeHead(403);return res.end("Forbidden");}
+    }
   }
   let form;
   try{form=await readForm(req);}catch{
