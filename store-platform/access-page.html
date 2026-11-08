@@ -65,9 +65,9 @@
   <main class="form-side">
     <div class="brand" aria-label="Everywear Studio">everywear.<span>PRIVATE STUDIO / 2026</span></div>
     <section class="content" aria-labelledby="access-title">
-      <div class="eyebrow">ACCESO A VISTA PREVIA</div>
+      <div class="eyebrow">ACCESO A {{DESTINATION}}</div>
       <h1 id="access-title">Bienvenida<br>a <em>Everywear.</em></h1>
-      <p class="intro">Un espacio privado para conocer nuestra tienda y preparar cada detalle de la colección.</p>
+      <p class="intro">Accede a {{DESTINATION}} de Everywear en este entorno privado de pruebas.</p>
       {{MESSAGE}}
       <form class="form" action="/access" method="post" autocomplete="on">
         <input type="hidden" name="next" value="{{NEXT}}">
@@ -78,7 +78,7 @@
           <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Tu contraseña">
         </label>
         <button class="submit" type="submit">
-          <span>Entrar a la vista privada</span>
+          <span>{{BUTTON}}</span>
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 12h16m-7-7 7 7-7 7"/></svg>
         </button>
       </form>
