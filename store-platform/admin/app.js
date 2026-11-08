@@ -3,7 +3,7 @@ import * as api from "../client.js";
 // All commercial data is persisted in Supabase PERSONAL; only session tokens live in localStorage.
 const WORKSPACE = document.getElementById("workspace");
 const TOAST = document.getElementById("toast");
-const TITLES = { dashboard: "Resumen general", products: "Catálogo de productos", home: "Contenido del Home", settings: "Cuenta y seguridad" };
+const TITLES = { dashboard: "Resumen general", products: "Catálogo de productos", categories:"Categorías", home: "Contenido del Home", settings: "Mi cuenta" };
 const deepCopy = value => JSON.parse(JSON.stringify(value));
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -18,14 +18,15 @@ const safeImg = src => {
     ? esc(value) : "";
 };
 const blankProduct = () => ({
-  id:uid(),slug:"",name:"",category:"Tops",description:"",price:0,status:"draft",
+  id:uid(),slug:"",name:"",category:"",categoryIds:[],description:"",price:0,status:"draft",
   featured:false,sortOrder:0,tag:"",images:[],variants:[]
 });
 const blankMedia = () => ({id:uid(),src:"",alt:"",enabled:true,sortOrder:0});
-let db = {products:[],home:{tv:[],lookbook:[],hero:[]},settings:{storeName:"Everywear",currency:"USD"}};
+let db = {products:[],categories:[],home:{tv:[],lookbook:[],hero:[]},settings:{storeName:"Everywear",currency:"USD"}};
 let authorizedEmail = "";
 async function loadData() {
-  const [products,media]=await Promise.all([api.listProducts(),api.listHome(true)]);
+  const [products,media,categories]=await Promise.all([api.listProducts(),api.listHome(true),api.listCategories(true)]);
+  db.categories=categories;
   db.products=products;
   db.home={tv:[],lookbook:[],hero:[]};
   media.forEach(item=>{if(db.home[item.section])db.home[item.section].push({
@@ -49,131 +50,160 @@ function card(label,num,note) {
     '</div><div class="muted">'+note+'</div></div>';
 }
 function renderDashboard() {
-  const active = db.products.filter(p=>p.status==="active").length;
-  const variants = db.products.flatMap(p=>p.variants||[]);
-  const unknown = variants.filter(v=>v.stock===null || v.stock==="" || v.stock===undefined).length;
-  const stock = variants.reduce((n,v)=>n+(v.stock===null || v.stock==="" || v.stock===undefined?0:Number(v.stock)||0),0);
-  return header("Tu tienda, en un solo lugar",
-    "Administra productos, inventario y fotografías con almacenamiento seguro.")+
-    '<div class="cards">'+card("Productos cargados",db.products.length,"Registros reales de Supabase")+
-    card("Publicables",active,"Visibles en la vista previa")+
-    card("Unidades registradas",stock,"Solo cantidades configuradas")+
-    card("Variantes sin stock definido",unknown,"Pendientes de completar")+'</div>'+
-    '<div class="layout-two"><section class="panel"><div class="panel-head"><h2>Qué ya puedes probar</h2></div>'+
-    '<p class="muted">Crea productos con precios, descripciones, colores, tallas, inventario y fotografías almacenadas en Supabase.</p>'+
-    '<p class="muted">Solo los productos activos aparecen en la tienda de pruebas. Los borradores no son públicos.</p>'+
-    '<button class="btn" data-action="go-products">Administrar productos</button></section>'+
-    '<section class="panel"><div class="panel-head"><h2>Sincronización y seguridad</h2></div>'+
-    '<p class="muted">Conexión activa con PostgreSQL, Supabase Auth y almacenamiento de imágenes protegido por permisos.</p>'+
-    '<p class="muted">Los productos de demostración permanecen como borrador hasta que los publiques explícitamente.</p>'+
-    '<button class="btn btn-outline" data-action="go-home">Editar fotos del Home</button></section></div>';
+  const active=db.products.filter(p=>p.status==="active").length;
+  const variants=db.products.flatMap(p=>p.variants||[]);
+  const unknown=variants.filter(v=>v.stock===null||v.stock===undefined).length;
+  const stock=variants.reduce((n,v)=>n+(Number(v.stock)||0),0);
+  return header("Tu tienda, en un solo lugar","Todo lo que necesitas para cuidar cada detalle de tu colección.")+
+    '<div class="cards">'+card("Productos",db.products.length,"Artículos de tu catálogo")+
+    card("Publicados",active,"Disponibles en la tienda")+
+    card("Unidades registradas",stock,"Inventario disponible")+
+    card("Tallas por revisar",unknown,"Sin cantidad asignada")+'</div>'+
+    '<div class="layout-two"><section class="panel"><div class="panel-head"><h2>Tu colección</h2></div>'+
+    '<p class="muted">Organiza tus prendas, actualiza sus precios y prepara nuevas colecciones.</p>'+
+    '<p class="muted">Los productos en borrador permanecen ocultos hasta que decidas publicarlos.</p>'+
+    '<button class="btn" data-action="go-products">Ver productos</button></section>'+
+    '<section class="panel"><div class="panel-head"><h2>Tu estilo, siempre al día</h2></div>'+
+    '<p class="muted">Personaliza las fotografías de la portada, el lookbook y los televisores.</p>'+
+    '<p class="muted">Cada cambio se reflejará en la tienda al actualizarla.</p>'+
+    '<button class="btn btn-outline" data-action="go-home">Editar imágenes</button></section></div>';
 }
 function productRows() {
-  const q = query.trim().toLowerCase();
-  const products = db.products.filter(p=>[p.name,p.category,p.slug].join(" ").toLowerCase().includes(q));
-  if (!products.length) return '<tr><td colspan="6"><div class="empty">No hay productos que coincidan con tu búsqueda.</div></td></tr>';
+  const q=query.trim().toLowerCase();
+  const products=db.products.filter(p=>[p.name,...(p.categories||[p.category])].join(" ").toLowerCase().includes(q));
+  if(!products.length)return '<tr><td colspan="6"><div class="empty">No hay productos que coincidan con tu búsqueda.</div></td></tr>';
   return products.map(p=>{
-    const known = (p.variants||[]).filter(v=>v.stock!==null && v.stock!==undefined && v.stock!=="");
-    const qty = known.reduce((n,v)=>n+Number(v.stock||0),0);
-    const stockLabel = known.length === (p.variants||[]).length ? qty+" uds." : qty+" uds. + sin definir";
-    const img = p.images?.[0]?.src;
-    return '<tr><td><div class="item-with-photo">'+imgMarkup(img,p.name)+'<div><div class="product-title">'+esc(p.name)+
-      '</div><div class="muted">'+esc(p.category)+'</div></div></div></td>'+
-      '<td>'+money(p.price)+'</td><td><span class="pill '+esc(p.status)+'">'+esc(p.status)+'</span></td>'+
-      '<td>'+esc((p.variants||[]).length)+'</td><td>'+esc(stockLabel)+'</td><td><div class="actions">'+
+    const known=(p.variants||[]).filter(v=>v.stock!==null&&v.stock!==undefined&&v.stock!=="");
+    const qty=known.reduce((n,v)=>n+Number(v.stock||0),0);
+    const stockLabel=known.length===(p.variants||[]).length?qty+" uds.":qty+" uds. + pendientes";
+    const index=db.products.findIndex(item=>item.id===p.id);
+    return '<tr><td><div class="item-with-photo">'+imgMarkup(p.images?.[0]?.src,p.name)+
+      '<div><div class="product-title">'+esc(p.name)+'</div><div class="muted">'+
+      esc((p.categories||[p.category]).join(" · "))+'</div></div></div></td>'+
+      '<td>'+money(p.price)+'</td><td><span class="pill '+esc(p.status)+'">'+
+      esc(({active:"Activo",draft:"Borrador",archived:"Archivado"})[p.status]||p.status)+'</span></td>'+
+      '<td>'+esc((p.variants||[]).length)+'</td><td>'+esc(stockLabel)+'</td>'+
+      '<td><div class="actions"><div class="sort-arrows">'+
+      '<button type="button" class="btn btn-outline btn-sm" data-action="move-product" data-id="'+esc(p.id)+'" data-direction="-1" '+(index===0?"disabled":"")+' title="Subir producto" aria-label="Subir producto">↑</button>'+
+      '<button type="button" class="btn btn-outline btn-sm" data-action="move-product" data-id="'+esc(p.id)+'" data-direction="1" '+(index===db.products.length-1?"disabled":"")+' title="Bajar producto" aria-label="Bajar producto">↓</button></div>'+
       '<button class="btn btn-outline btn-sm" data-action="edit-product" data-id="'+esc(p.id)+'">Editar</button>'+
-      '<button class="btn btn-danger btn-sm" data-action="delete-product" data-id="'+esc(p.id)+'">Archivar</button>'+
+      '<button class="btn btn-outline btn-sm" data-action="archive-product" data-id="'+esc(p.id)+'">Archivar</button>'+
+      '<button class="btn btn-danger btn-sm" data-action="delete-permanent" data-id="'+esc(p.id)+'">Eliminar</button>'+
       '</div></td></tr>';
   }).join("");
 }
 function renderProducts() {
-  if (editing) return renderProductEditor();
-  return header("Catálogo de productos","Crea artículos, organiza variantes y prepara su publicación.",
+  if(editing)return renderProductEditor();
+  return header("Catálogo de productos","Organiza tu colección y cambia el orden con las flechas de cada artículo.",
     '<button class="btn" data-action="new-product">+ Nuevo producto</button>')+
     '<section class="panel"><div class="toolbar"><input id="search-products" type="search" placeholder="Buscar por nombre o categoría…" value="'+esc(query)+'">'+
-    '<span class="muted">'+db.products.length+' productos · sincronizados con Supabase</span></div>'+
-    '<div class="table-wrap"><table><thead><tr><th>Artículo</th><th>Precio</th><th>Estado</th><th>Variantes</th><th>Inventario</th><th>Acciones</th></tr></thead>'+
+    '<span class="muted">'+db.products.length+' productos en tu colección</span></div>'+
+    '<div class="table-wrap"><table><thead><tr><th>Artículo</th><th>Precio</th><th>Estado</th><th>Variantes</th><th>Inventario</th><th>Orden y acciones</th></tr></thead>'+
     '<tbody id="product-rows">'+productRows()+'</tbody></table></div></section>';
 }
-function variantRow(v,i) {
-  const stock = v.stock===null || v.stock===undefined ? "" : v.stock;
-  return '<div class="editable-row" data-variant-row data-index="'+i+'">'+
-    '<input data-v-field="color" aria-label="Color" placeholder="Color" value="'+esc(v.color)+'">'+
-    '<input data-v-field="hex" type="color" aria-label="Color visual" value="'+esc(/^#[a-fA-F0-9]{6}$/.test(v.hex)?v.hex:"#777777")+'">'+
-    '<input data-v-field="size" aria-label="Talla" placeholder="Talla" value="'+esc(v.size)+'">'+
-    '<input data-v-field="stock" type="number" min="0" step="1" aria-label="Existencias" placeholder="—" value="'+esc(stock)+'">'+
-    '<button type="button" class="btn btn-danger btn-sm" data-action="remove-variant" data-index="'+i+'" aria-label="Eliminar variante">×</button>'+
-    '</div>';
+function renderCategories(){
+  return header("Categorías","Crea las secciones que mejor describen tu colección.")+
+    '<section class="panel"><form id="category-form" class="category-create">'+
+    '<label>Nombre de la categoría<input name="name" maxlength="80" minlength="2" required placeholder="Ej. Jeans"></label>'+
+    '<button class="btn" type="submit">+ Crear categoría</button></form>'+
+    '<p class="help">Una categoría se crea una sola vez y podrás asignarla a todas las prendas que quieras.</p>'+
+    '<div class="category-list">'+db.categories.map(c=>
+    '<span class="category-tag">'+esc(c.name)+'</span>').join("")+'</div></section>';
+}
+function colorGroups() {
+  const groups=[];
+  draft.variants.forEach((v,i)=>{
+    let g=groups.find(item=>item.name===v.color);
+    if(!g){g={name:v.color,hex:v.hex||"#777777",indices:[]};groups.push(g);}
+    g.indices.push(i);
+  });
+  return groups.map((g,n)=>
+    '<div class="color-group" data-color-group data-members="'+g.indices.join(",")+'">'+
+    '<div class="color-heading"><span class="color-count">Color '+(n+1)+'</span>'+
+    '<label>Nombre<input data-color-name maxlength="80" value="'+esc(g.name)+'" placeholder="Ej. Crema"></label>'+
+    '<label>Color visual<input type="color" data-color-hex value="'+esc(/^#[a-fA-F0-9]{6}$/.test(g.hex)?g.hex:"#777777")+'"></label>'+
+    '<button type="button" class="btn btn-danger btn-sm" data-action="remove-color" data-index="'+g.indices[0]+'">Quitar color</button></div>'+
+    '<div class="size-head">Talla <span>Existencias</span></div>'+
+    g.indices.map(i=>{
+      const v=draft.variants[i],stock=v.stock===null||v.stock===undefined?"":v.stock;
+      return '<div class="size-row" data-variant-row data-index="'+i+'">'+
+      '<input data-v-field="size" aria-label="Talla" placeholder="Ej. S, M, L" value="'+esc(v.size)+'">'+
+      '<input data-v-field="stock" type="number" min="0" step="1" aria-label="Existencias" placeholder="Sin definir" value="'+esc(stock)+'">'+
+      '<button type="button" class="btn btn-danger btn-sm" data-action="remove-variant" data-index="'+i+'" aria-label="Quitar talla">×</button></div>';
+    }).join("")+
+    '<button type="button" class="btn btn-outline btn-sm" data-action="add-size" data-index="'+g.indices[0]+'">+ Agregar talla</button></div>'
+  ).join("");
 }
 function imageRow(image,i) {
-  return '<div class="media-row" data-image-row data-index="'+i+'">'+
-    imgMarkup(image.src,image.alt)+
-    '<div class="controls"><input data-image-field="src" aria-label="URL de foto" placeholder="https://… o /brand/…" value="'+esc(image.src)+'">'+
-    '<input data-image-field="alt" aria-label="Descripción de foto" placeholder="Descripción accesible" value="'+esc(image.alt)+'"></div>'+
-    '<button type="button" class="btn btn-danger btn-sm" data-action="remove-image" data-index="'+i+'">×</button></div>';
+  return '<div class="photo-card" data-image-row data-index="'+i+'">'+
+    imgMarkup(image.src,image.alt||draft.name,"photo-preview")+
+    '<div class="photo-meta"><strong>Foto '+(i+1)+(i===0?' · Principal':'')+'</strong>'+
+    '<label>Descripción<input data-image-field="alt" maxlength="160" value="'+esc(image.alt||"")+'" placeholder="Descripción opcional"></label></div>'+
+    '<div class="photo-buttons"><button type="button" class="btn btn-outline btn-sm" data-action="move-image" data-index="'+i+'" data-direction="-1" '+(i===0?'disabled':'')+' aria-label="Mover foto hacia arriba">↑</button>'+
+    '<button type="button" class="btn btn-outline btn-sm" data-action="move-image" data-index="'+i+'" data-direction="1" '+(i===draft.images.length-1?'disabled':'')+' aria-label="Mover foto hacia abajo">↓</button>'+
+    '<button type="button" class="btn btn-danger btn-sm" data-action="remove-image" data-index="'+i+'">Quitar</button></div></div>';
 }
-function renderProductEditor() {
-  return header(draft.name ? "Editar "+esc(draft.name) : "Nuevo producto",
-    "Los cambios se guardan en Supabase PERSONAL. Solo el estado Activo se muestra en la tienda de prueba.",
+function renderProductEditor(){
+  const selected=new Set(draft.categoryIds||[]);
+  return header(draft.name?"Editar "+esc(draft.name):"Nuevo producto",
+    "Personaliza los detalles de tu prenda y elige cuándo mostrarla en la tienda.",
     '<button class="btn btn-outline" data-action="cancel-product">← Regresar</button>')+
     '<form id="product-form" class="panel"><div class="form-grid">'+
     '<label>Nombre del producto<input name="name" maxlength="180" required value="'+esc(draft.name)+'"></label>'+
-    '<label>Categoría<input name="category" maxlength="80" required value="'+esc(draft.category)+'"></label>'+
     '<label>Precio (USD)<input type="number" name="price" min="0" step=".01" required value="'+esc(draft.price)+'"></label>'+
+    '<div class="wide"><strong class="form-caption">Categorías</strong><p class="help">Puedes elegir varias para la misma prenda.</p>'+
+    '<div class="category-choices">'+db.categories.map(c=>
+      '<label class="category-choice"><input type="checkbox" name="categoryIds" value="'+esc(c.id)+'" '+(selected.has(c.id)?'checked':'')+'><span>'+esc(c.name)+'</span></label>').join("")+
+    '</div><button type="button" class="btn btn-outline btn-sm category-shortcut" data-action="go-categories">Administrar categorías</button></div>'+
     '<label>Estado<select name="status"><option value="draft" '+(draft.status==="draft"?"selected":"")+'>Borrador</option>'+
     '<option value="active" '+(draft.status==="active"?"selected":"")+'>Activo</option>'+
     '<option value="archived" '+(draft.status==="archived"?"selected":"")+'>Archivado</option></select></label>'+
     '<label>Etiqueta (opcional)<input name="tag" maxlength="40" value="'+esc(draft.tag)+'" placeholder="Nuevo, Favorito…"></label>'+
-    '<label>Orden de aparición<input name="sortOrder" type="number" step="1" value="'+esc(draft.sortOrder)+'"></label>'+
     '<label class="wide">Descripción<textarea name="description" maxlength="2500">'+esc(draft.description)+'</textarea></label>'+
     '<div class="wide checkline"><input type="checkbox" id="featured" name="featured" '+(draft.featured?"checked":"")+'><label for="featured">Mostrar como producto destacado</label></div></div>'+
-    '<div class="section-bar"><h3>Variantes · color, talla y existencias</h3><button type="button" class="btn btn-outline btn-sm" data-action="add-variant">+ Variante</button></div>'+
-    '<p class="help">Deja stock vacío si aún no lo sabes. Cero significa agotado. Cada combinación color/talla debe ser única.</p>'+
-    '<div id="variant-list">'+(draft.variants.length?draft.variants.map(variantRow).join(""):'<div class="empty">Sin variantes. Agrega una para definir colores y tallas.</div>')+'</div>'+
-    '<div class="section-bar"><h3>Fotografías del producto</h3><button type="button" class="btn btn-outline btn-sm" data-action="add-image">+ Fotografía</button></div>'+
-    '<p class="help">Selecciona archivos JPG, PNG, WebP o AVIF de hasta 8 MB. Se subirán a Supabase Storage. También puedes usar una URL HTTPS.</p>'+
-    '<input type="file" id="product-photo-file" accept="image/png,image/jpeg,image/webp,image/avif" aria-label="Agregar foto desde el equipo">'+
-    '<div id="image-list">'+(draft.images.length?draft.images.map(imageRow).join(""):'<div class="empty">Este producto no tiene fotografías.</div>')+'</div>'+
+    '<div class="section-bar"><h3>Colores y tallas</h3><button type="button" class="btn btn-outline btn-sm" data-action="add-color">+ Agregar color</button></div>'+
+    '<p class="help">Crea un color una sola vez y agrega debajo las tallas con sus cantidades.</p>'+
+    '<div id="variant-list">'+(draft.variants.length?colorGroups():'<div class="empty">Aún no hay colores. Agrega uno para empezar.</div>')+'</div>'+
+    '<div class="section-bar"><h3>Fotografías del producto</h3></div>'+
+    '<p class="help">Selecciona una o varias fotos desde tu dispositivo. La primera será la imagen principal; puedes cambiar el orden con las flechas.</p>'+
+    '<label class="upload-area">+ Seleccionar fotografías<input type="file" id="product-photo-file" multiple accept="image/png,image/jpeg,image/webp,image/avif"></label>'+
+    '<div id="image-list" class="photo-list">'+(draft.images.length?draft.images.map(imageRow).join(""):'<div class="empty">Todavía no has agregado fotografías.</div>')+'</div>'+
     '<div class="footer-actions"><button class="btn btn-outline" type="button" data-action="cancel-product">Cancelar</button>'+
     '<button class="btn" type="submit">Guardar producto</button></div></form>';
 }
 function renderHome() {
-  const labels = {tv:"Tres televisores",lookbook:"Lookbook editorial",hero:"Hero / portada"};
-  const items = homeDraft;
-  return header("Contenido visual del Home","Administra las galerías sin modificar el SVG ni las animaciones originales.")+
+  const labels={tv:"Tres televisores",lookbook:"Lookbook editorial",hero:"Portada"};
+  return header("Fotografías de la tienda","Elige las imágenes que representan tu colección.")+
     '<div class="home-tabs">'+Object.keys(labels).map(k=>
       '<button type="button" class="'+(homeTab===k?"active":"")+'" data-action="home-tab" data-section="'+k+'">'+labels[k]+'</button>'
     ).join("")+'</div><section class="panel"><div class="panel-head"><div><h2>'+labels[homeTab]+'</h2>'+
-    '<p class="muted">Ordena las fotografías y marca cuáles deben mostrarse.</p></div>'+
-    '<button type="button" class="btn" data-action="add-home">+ Agregar imagen</button></div>'+
-    '<p class="help">Las fotografías y su orden se guardan en Supabase. Se mantiene el diseño original de los televisores y el scroll.</p>'+
-    '<div id="home-list">'+(items.length ? items.map((item,i)=>
-      '<div class="home-tile" data-home-row data-index="'+i+'">'+imgMarkup(item.src,item.alt,"thumb")+
-      '<div><label>URL de imagen<input data-home-field="src" value="'+esc(item.src)+'" placeholder="https://…"></label>'+
-      '<label>Descripción<input data-home-field="alt" value="'+esc(item.alt)+'" placeholder="Descripción"></label>'+
-      '<div class="checkline"><input id="visible-'+i+'" type="checkbox" data-home-field="enabled" '+(item.enabled?"checked":"")+'>'+
-      '<label for="visible-'+i+'">Visible</label></div></div>'+
-      '<div class="two-buttons"><button class="btn btn-outline btn-sm" data-action="move-home" data-index="'+i+'" data-direction="-1" title="Subir">↑</button>'+
-      '<button class="btn btn-outline btn-sm" data-action="move-home" data-index="'+i+'" data-direction="1" title="Bajar">↓</button>'+
-      '<button class="btn btn-danger btn-sm" data-action="remove-home" data-index="'+i+'" title="Eliminar">×</button></div></div>').join("")
-      : '<div class="empty">No hay imágenes configuradas para esta sección.</div>')+'</div>'+
-    '<div class="section-bar"><label>Subir fotografía desde equipo<input type="file" id="home-photo-file" accept="image/jpeg,image/png,image/webp,image/avif"></label></div>'+
-    '<div class="footer-actions"><button class="btn" data-action="save-home">Guardar galería</button></div></section>';
+    '<p class="muted">Ordena las fotografías y decide cuáles quieres mostrar.</p></div></div>'+
+    '<label class="upload-area">+ Seleccionar fotografías<input type="file" id="home-photo-file" multiple accept="image/jpeg,image/png,image/webp,image/avif"></label>'+
+    '<div id="home-list" class="photo-list">'+(homeDraft.length?homeDraft.map((item,i)=>
+      '<div class="photo-card" data-home-row data-index="'+i+'">'+imgMarkup(item.src,item.alt,"photo-preview")+
+      '<div class="photo-meta"><strong>Foto '+(i+1)+'</strong>'+
+      '<label>Descripción<input data-home-field="alt" value="'+esc(item.alt)+'" placeholder="Descripción opcional"></label>'+
+      '<label class="checkline"><input data-home-field="enabled" type="checkbox" '+(item.enabled?"checked":"")+'> Visible en la tienda</label></div>'+
+      '<div class="photo-buttons"><button type="button" class="btn btn-outline btn-sm" data-action="move-home" data-index="'+i+'" data-direction="-1" '+(i===0?'disabled':'')+'>↑</button>'+
+      '<button type="button" class="btn btn-outline btn-sm" data-action="move-home" data-index="'+i+'" data-direction="1" '+(i===homeDraft.length-1?'disabled':'')+'>↓</button>'+
+      '<button type="button" class="btn btn-danger btn-sm" data-action="remove-home" data-index="'+i+'">Quitar</button></div></div>').join("")
+      :'<div class="empty">Todavía no hay fotografías en esta sección.</div>')+'</div>'+
+    '<div class="footer-actions"><button class="btn" data-action="save-home">Guardar cambios</button></div></section>';
 }
-function renderSettings() {
-  return header("Cuenta y seguridad","Tu sesión y la conexión protegida con Supabase PERSONAL.")+
-    '<section class="panel"><h2>Cuenta autorizada</h2>'+
-    '<p class="muted">Sesión: '+esc(authorizedEmail)+'</p>'+
-    '<p class="muted">Proyecto Supabase: '+esc(api.projectRef)+'. Todas las escrituras están protegidas por RLS.</p>'+
-    '<p class="muted">Los pedidos por WhatsApp no descuentan el inventario. Las cantidades solo cambian al editar el producto.</p>'+
-    '<button class="btn btn-outline" data-action="export-data">Exportar catálogo JSON</button> '+
+function renderSettings(){
+  return header("Mi cuenta","Gestiona tu sesión y conserva una copia de tu catálogo.")+
+    '<section class="panel"><h2>Datos de tu cuenta</h2>'+
+    '<p class="muted">Sesión iniciada como: <strong>'+esc(authorizedEmail)+'</strong></p>'+
+    '<p class="muted">Recuerda que enviar un pedido por WhatsApp no descuenta las existencias. Puedes actualizarlas desde cada producto.</p>'+
+    '<button class="btn btn-outline" data-action="export-data">Descargar copia del catálogo</button> '+
     '<button class="btn btn-danger" data-action="sign-out">Cerrar sesión</button></section>';
 }
+
 function render() {
   document.getElementById("subtitle").textContent = TITLES[view];
   document.querySelectorAll("[data-view]").forEach(el=>el.classList.toggle("active",el.dataset.view===view));
   WORKSPACE.innerHTML = view==="dashboard" ? renderDashboard() :
-    view==="products" ? renderProducts() : view==="home" ? renderHome() : renderSettings();
+    view==="products" ? renderProducts() : view==="categories"?renderCategories(): view==="home" ? renderHome() : renderSettings();
 }
 function go(next) {
   view = next; editing=false;draft=null;
@@ -182,35 +212,46 @@ function go(next) {
 }
 function startEdit(id) {
   draft = id ? deepCopy(db.products.find(p=>p.id===id)) : blankProduct();
+  if(draft && !(draft.categoryIds||[]).length){
+    draft.categoryIds=db.categories.filter(c=>c.name===draft.category).map(c=>c.id);
+  }
   if (!draft) return notify("Producto no encontrado");
   editing=true; view="products";render();window.scrollTo(0,0);
 }
-function collectProduct() {
-  const form = document.getElementById("product-form"); if (!form || !draft) return;
-  const fields = new FormData(form);
-  draft.name = String(fields.get("name")||"").trim();
-  draft.category = String(fields.get("category")||"").trim();
-  draft.description = String(fields.get("description")||"").trim();
-  draft.price = Number(fields.get("price"));
-  draft.status = String(fields.get("status")||"draft");
-  draft.tag = String(fields.get("tag")||"").trim();
-  draft.sortOrder = Number(fields.get("sortOrder"))||0;
-  draft.featured = fields.get("featured")==="on";
+function collectProduct(){
+  const form=document.getElementById("product-form");if(!form||!draft)return;
+  const fields=new FormData(form);
+  draft.name=String(fields.get("name")||"").trim();
+  draft.categoryIds=fields.getAll("categoryIds").map(String);
+  draft.category=db.categories.find(c=>c.id===draft.categoryIds[0])?.name||"";
+  draft.description=String(fields.get("description")||"").trim();
+  draft.price=Number(fields.get("price"));
+  draft.status=String(fields.get("status")||"draft");
+  draft.tag=String(fields.get("tag")||"").trim();
+  draft.featured=fields.get("featured")==="on";
   document.querySelectorAll("[data-variant-row]").forEach(row=>{
-    const i=Number(row.dataset.index),v=draft.variants[i]; if(!v)return;
+    const v=draft.variants[Number(row.dataset.index)];if(!v)return;
     row.querySelectorAll("[data-v-field]").forEach(input=>{
       const field=input.dataset.vField;
-      v[field] = field==="stock" ? (input.value==="" ? null : Number(input.value)) : input.value.trim();
+      v[field]=field==="stock"?(input.value===""?null:Number(input.value)):input.value.trim();
     });
   });
+  document.querySelectorAll("[data-color-group]").forEach(group=>{
+    const name=group.querySelector("[data-color-name]").value.trim();
+    const hex=group.querySelector("[data-color-hex]").value;
+    for(const index of group.dataset.members.split(",").map(Number)){
+      if(draft.variants[index])Object.assign(draft.variants[index],{color:name,hex});
+    }
+  });
   document.querySelectorAll("[data-image-row]").forEach(row=>{
-    const i=Number(row.dataset.index),im=draft.images[i];if(!im)return;
-    row.querySelectorAll("[data-image-field]").forEach(input=>im[input.dataset.imageField]=input.value.trim());
+    const im=draft.images[Number(row.dataset.index)];
+    if(im)im.alt=row.querySelector("[data-image-field=alt]").value.trim();
   });
 }
+
 function validateProduct(p) {
   if (p.name.length < 2 || p.name.length > 180) return "El nombre debe tener de 2 a 180 caracteres";
-  if (!p.category) return "La categoría es obligatoria";
+  if (!p.categoryIds?.length) return "Selecciona al menos una categoría";
   if (!Number.isFinite(p.price) || p.price<0) return "El precio no es válido";
   if (!["draft","active","archived"].includes(p.status)) return "Estado inválido";
   const pairs = new Set();
@@ -221,7 +262,7 @@ function validateProduct(p) {
     if (pairs.has(pair)) return "Hay combinaciones repetidas de color y talla";
     pairs.add(pair);
   }
-  if (p.images.some(im=>im.src && !safeImg(im.src))) return "Hay una URL de fotografía no permitida";
+  if (p.images.some(im=>im.src && !safeImg(im.src))) return "Hay una fotografía no válida";
   if (p.status==="active" && (!p.images.some(im=>im.src) || !p.variants.length))
     return "Para activar un producto, agrega al menos una foto y una variante";
   return null;
@@ -240,7 +281,7 @@ async function saveProduct() {
     await api.saveProduct(draft);
     await loadData();
     editing=false;draft=null;render();
-    notify("Producto guardado correctamente en Supabase");
+    notify("Producto guardado correctamente");
   }catch(error){notify("No se guardó: "+error.message);}
 }
 function collectHome() {
@@ -254,12 +295,12 @@ function collectHome() {
 }
 async function saveHome() {
   collectHome();
-  if(homeDraft.some(x=>x.src&&!safeImg(x.src)))return notify("Hay una imagen con URL no permitida");
+  if(homeDraft.some(x=>x.src&&!safeImg(x.src)))return notify("Hay una fotografía no válida");
   try{
     await api.saveHomeSection(homeTab,homeDraft.map((m,i)=>({...m,sortOrder:i})),db.home[homeTab]);
     await loadData();
     homeDraft=deepCopy(db.home[homeTab]);render();
-    notify("Galería guardada en Supabase");
+    notify("Galería actualizada correctamente");
   }catch(error){notify("Error al guardar la galería: "+error.message);}
 }
 async function fileAsImage(file,folder) {
@@ -273,22 +314,55 @@ document.addEventListener("click", async e=>{
   const action=el.dataset.action,idx=Number(el.dataset.index);
   if(action==="go-products")return go("products");
   if(action==="go-home")return go("home");
+  if(action==="go-categories")return go("categories");
   if(action==="new-product")return startEdit(null);
   if(action==="edit-product")return startEdit(el.dataset.id);
   if(action==="cancel-product"){editing=false;draft=null;return render();}
-  if(action==="add-variant"){collectProduct();draft.variants.push({id:uid(),color:"",hex:"#777777",size:"",stock:null});return render();}
+  if(action==="add-color"){
+    collectProduct();let number=1;
+    while(draft.variants.some(v=>v.color==="Color "+number))number++;
+    draft.variants.push({id:uid(),color:"Color "+number,hex:"#777777",size:"Única",stock:null});return render();
+  }
+  if(action==="add-size"){
+    collectProduct();const base=draft.variants[idx];if(!base)return;
+    draft.variants.push({id:uid(),color:base.color,hex:base.hex,size:"",stock:null});return render();
+  }
+  if(action==="remove-color"){
+    collectProduct();const color=draft.variants[idx]?.color;
+    draft.variants=draft.variants.filter(v=>v.color!==color);return render();
+  }
   if(action==="remove-variant"){collectProduct();draft.variants.splice(idx,1);return render();}
-  if(action==="add-image"){collectProduct();draft.images.push({id:uid(),src:"",alt:""});return render();}
+  if(action==="move-image"){
+    collectProduct();const other=idx+Number(el.dataset.direction);
+    if(other>=0&&other<draft.images.length)[draft.images[idx],draft.images[other]]=[draft.images[other],draft.images[idx]];
+    return render();
+  }
   if(action==="remove-image"){collectProduct();draft.images.splice(idx,1);return render();}
-  if(action==="delete-product"){
+  if(action==="move-product"){
+    const start=db.products.findIndex(p=>p.id===el.dataset.id),end=start+Number(el.dataset.direction);
+    if(start<0||end<0||end>=db.products.length)return;
+    const reordered=db.products.slice();[reordered[start],reordered[end]]=[reordered[end],reordered[start]];
+    try{await api.reorderProducts(reordered);await loadData();render();notify("Orden actualizado");}
+    catch(error){await loadData();render();notify("No se pudo cambiar el orden: "+error.message);}
+    return;
+  }
+  if(action==="delete-permanent"){
+    const p=db.products.find(p=>p.id===el.dataset.id);if(!p)return;
+    const answer=prompt('Para ELIMINAR DEFINITIVAMENTE este artículo y todas sus variantes, escribe su nombre exactamente: '+p.name);
+    if(answer!==p.name)return;
+    try{await api.deleteProduct(p.id);await loadData();render();notify("Producto eliminado");}
+    catch(error){notify("No se pudo eliminar: "+error.message);}
+    return;
+  }
+  if(action==="archive-product"){
     const p=db.products.find(p=>p.id===el.dataset.id);
     if(!p||!confirm('¿Archivar "'+p.name+'"? Dejará de verse en la tienda de pruebas.'))return;
-    try{await api.archiveProduct(p.id);await loadData();render();notify("Producto archivado en Supabase");}
+    try{await api.archiveProduct(p.id);await loadData();render();notify("Producto archivado");}
     catch(error){notify("No se pudo archivar: "+error.message);}
     return;
   }
   if(action==="home-tab"){collectHome();homeTab=el.dataset.section;homeDraft=deepCopy(db.home[homeTab]);return render();}
-  if(action==="add-home"){collectHome();homeDraft.push(blankMedia());return render();}
+  
   if(action==="remove-home"){collectHome();homeDraft.splice(idx,1);return render();}
   if(action==="move-home"){
     collectHome();const other=idx+Number(el.dataset.direction);
@@ -308,7 +382,14 @@ document.addEventListener("click", async e=>{
   }
 });
 document.addEventListener("submit",e=>{
-  if(e.target.id!=="product-form")return;
+  if(e.target.id!=="product-form"&&e.target.id!=="category-form")return;
+  if(e.target.id==="category-form"){
+    e.preventDefault();const name=String(new FormData(e.target).get("name")||"").trim();
+    if(name.length<2)return notify("Escribe un nombre de categoría");
+    if(db.categories.some(c=>c.name.trim().toLowerCase()===name.toLowerCase()))return notify("Esa categoría ya existe");
+    api.createCategory(name).then(()=>loadData()).then(()=>{render();notify("Categoría creada");})
+      .catch(error=>notify("No se pudo crear la categoría: "+error.message));return;
+  }
   e.preventDefault();saveProduct();
 });
 document.addEventListener("input",e=>{
@@ -318,10 +399,16 @@ document.addEventListener("change",async e=>{
   const id=e.target.id;
   if(id==="product-photo-file" || id==="home-photo-file"){
     try {
-      const src=await fileAsImage(e.target.files?.[0],id==="product-photo-file"?"products":"home");
-      if(id==="product-photo-file"){collectProduct();draft.images.push({id:uid(),src,alt:draft.name});}
-      else {collectHome();homeDraft.push({...blankMedia(),src});}
-      render();notify("Imagen subida a Supabase Storage. Guarda para vincularla al producto o galería.");
+      const files=Array.from(e.target.files||[]);
+      if(id==="product-photo-file")collectProduct();else collectHome();
+      let uploaded=0;
+      for(const file of files){
+        const src=await fileAsImage(file,id==="product-photo-file"?"products":"home");
+        if(id==="product-photo-file")draft.images.push({id:uid(),src,alt:draft.name});
+        else homeDraft.push({...blankMedia(),src});
+        uploaded++;
+      }
+      render();notify(uploaded+" fotografía(s) cargada(s). Guarda los cambios para publicarlas.");
     } catch(error){notify(error.message);}
   }
 
@@ -332,10 +419,10 @@ function showLogin(message="") {
   appShell.hidden=true;
   loginScreen.hidden=false;
   loginScreen.querySelector(".auth-message").textContent=message;
-  db.products=[];db.home={tv:[],lookbook:[],hero:[]};
+  db.products=[];db.categories=[];db.home={tv:[],lookbook:[],hero:[]};
 }
 async function initialize() {
-  if(!api.configured)return showLogin("Supabase no está configurado para este despliegue.");
+  if(!api.configured)return showLogin("No se pudo conectar con la tienda. Intenta nuevamente más tarde.");
   const user=await api.checkAdmin();
   if(!user){
     return showLogin("Inicia sesión con una cuenta autorizada. Si ya has iniciado sesión, solicita que tu usuario se agregue a los administradores.");
