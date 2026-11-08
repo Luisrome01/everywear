@@ -495,7 +495,9 @@ document.addEventListener("input",e=>{
     // Re-render on search while keeping selections (including unsaved ones).
     const form=document.getElementById("category-products-form");
     if(form){
-      pendingCategorySelection=new Set(db.products.filter(p=>(p.categoryIds||[]).includes(selectedCategoryId)).map(p=>p.id));
+      if(!pendingCategorySelection){
+        pendingCategorySelection=new Set(db.products.filter(p=>(p.categoryIds||[]).includes(selectedCategoryId)).map(p=>p.id));
+      }
       for(const box of form.querySelectorAll('[name="productIds"]')){
         if(box.checked)pendingCategorySelection.add(box.value);
         else pendingCategorySelection.delete(box.value);
