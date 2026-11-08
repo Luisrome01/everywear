@@ -84,7 +84,11 @@ function escapeHtml(value){
 }
 function showAccess(req,res,returnTo,message="",status=200){
   const warning=message?'<p class="message" role="alert">'+escapeHtml(message)+'</p>':"";
-  const html=accessPage.replace("{{NEXT}}",escapeHtml(safeDestination(returnTo)))
+  const destination=safeDestination(returnTo);
+  const isAdmin=destination.startsWith("/store-platform/admin");
+  const html=accessPage.replace("{{NEXT}}",escapeHtml(destination))
+    .replaceAll("{{DESTINATION}}",isAdmin?"panel administrativo":"tienda online")
+    .replaceAll("{{BUTTON}}",isAdmin?"Entrar al panel administrativo":"Entrar a la tienda")
     .replace("{{MESSAGE}}",warning);
   res.writeHead(status,{"Content-Type":"text/html; charset=utf-8",
     "Content-Security-Policy":"default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"});
