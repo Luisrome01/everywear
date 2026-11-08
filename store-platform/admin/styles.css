@@ -177,3 +177,23 @@ button{touch-action:manipulation}
  .category-mini-photo{width:42px;height:52px;flex-basis:42px}
 }
 @media(prefers-reduced-motion:reduce){.product-clickable,.category-clickable{transition:none}}
+
+/* Branded product deletion confirmation */
+.ew-confirm-dialog{position:fixed;inset:0;margin:auto;width:min(92vw,460px);max-height:min(90dvh,650px);overflow:auto;border:1px solid #e5d4cf;border-radius:20px;padding:0;background:#fffaf5;color:#382b31;box-shadow:0 25px 95px #2b162a35}
+.ew-confirm-dialog::backdrop{background:#1e141bcc;backdrop-filter:blur(4px)}
+.ew-dialog-body{padding:clamp(24px,5vw,38px)}
+.ew-dialog-kicker{display:block;font-size:10px;font-weight:700;letter-spacing:.16em;color:#936c77;margin-bottom:22px}
+.ew-dialog-icon{display:grid;place-items:center;width:52px;height:52px;background:#f5e3e6;color:#833750;border-radius:15px;margin-bottom:19px}
+.ew-dialog-icon svg{width:25px;height:25px}
+.ew-confirm-dialog h2{font:400 clamp(26px,4vw,33px)/1.18 Georgia,serif;margin:0 0 14px;color:#422b34}
+.ew-confirm-dialog p{margin:0 0 15px;font-size:14px;line-height:1.7;color:#6e5c61;overflow-wrap:anywhere}
+.ew-confirm-dialog strong{color:#693047}
+.ew-confirm-dialog .ew-dialog-note{font-size:12px;margin-bottom:24px;color:#97777d}
+.ew-dialog-error{font-size:12px!important;color:#a43f42!important;background:#f9e9e7;padding:10px 12px;border-radius:8px}
+.ew-dialog-error[hidden]{display:none}
+.ew-dialog-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ew-dialog-actions .btn{min-height:45px;font-size:13px}
+.ew-dialog-actions .btn-danger{color:#fff;background:#852e48;border-color:#852e48}
+.ew-dialog-actions .btn-danger:hover{background:#652239;border-color:#652239}
+.ew-dialog-actions button:disabled{cursor:progress;opacity:.6}
+@media(max-width:400px){.ew-dialog-actions{grid-template-columns:1fr}.ew-dialog-actions .btn-outline{order:2}.ew-dialog-actions .btn-danger{order:1}}
