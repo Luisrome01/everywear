@@ -366,6 +366,58 @@ async function fileAsImage(file,folder) {
   const result=await api.uploadImage(file,folder);
   return result.src;
 }
+const productDeleteDialog=document.getElementById("delete-product-dialog");
+const productDeleteName=document.getElementById("delete-product-name");
+const productDeleteError=document.getElementById("delete-dialog-error");
+const productDeleteConfirm=document.getElementById("confirm-delete-product");
+const productDeleteCancel=document.getElementById("cancel-delete-product");
+let pendingProductDeleteId=null;
+function closeDeleteDialog(){
+  if(productDeleteConfirm.disabled)return;
+  productDeleteDialog.close();
+}
+function openDeleteDialog(product){
+  if(productDeleteDialog.open)return;
+  pendingProductDeleteId=product.id;
+  productDeleteName.textContent=product.name;
+  productDeleteError.textContent="";
+  productDeleteError.hidden=true;
+  productDeleteConfirm.disabled=false;
+  productDeleteConfirm.textContent="Sí, eliminar";
+  productDeleteDialog.showModal();
+  productDeleteCancel.focus();
+}
+productDeleteCancel.addEventListener("click",closeDeleteDialog);
+productDeleteDialog.addEventListener("click",event=>{
+  // Clicking the backdrop cancels; clicking the dialog itself never confirms.
+  if(event.target===productDeleteDialog)closeDeleteDialog();
+});
+productDeleteDialog.addEventListener("close",()=>{pendingProductDeleteId=null;});
+productDeleteDialog.addEventListener("cancel",event=>{
+  if(productDeleteConfirm.disabled)event.preventDefault();
+});
+productDeleteConfirm.addEventListener("click",async()=>{
+  const id=pendingProductDeleteId;
+  if(!id||productDeleteConfirm.disabled)return;
+  productDeleteConfirm.disabled=true;
+  productDeleteCancel.disabled=true;
+  productDeleteConfirm.textContent="Eliminando…";
+  productDeleteError.hidden=true;
+  try{
+    await api.deleteProduct(id);
+    await loadData();
+    productDeleteDialog.close();
+    render();
+    notify("Producto eliminado correctamente");
+  }catch(error){
+    productDeleteError.textContent="No se pudo eliminar el producto. "+error.message;
+    productDeleteError.hidden=false;
+  }finally{
+    productDeleteConfirm.disabled=false;
+    productDeleteCancel.disabled=false;
+    productDeleteConfirm.textContent="Sí, eliminar";
+  }
+});
 document.addEventListener("click", async e=>{
   const nav=e.target.closest("[data-view]");if(nav){go(nav.dataset.view);return;}
   const el=e.target.closest("[data-action]");
@@ -422,11 +474,8 @@ document.addEventListener("click", async e=>{
     return;
   }
   if(action==="delete-permanent"){
-    const p=db.products.find(p=>p.id===el.dataset.id);if(!p)return;
-    const answer=prompt('Para ELIMINAR DEFINITIVAMENTE este artículo y todas sus variantes, escribe su nombre exactamente: '+p.name);
-    if(answer!==p.name)return;
-    try{await api.deleteProduct(p.id);await loadData();render();notify("Producto eliminado");}
-    catch(error){notify("No se pudo eliminar: "+error.message);}
+    const product=db.products.find(p=>p.id===el.dataset.id);
+    if(product)openDeleteDialog(product);
     return;
   }
   if(action==="archive-product"){
