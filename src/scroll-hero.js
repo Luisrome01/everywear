@@ -12,10 +12,9 @@ export function scrollHeroMarkup() {
       <div class="ew-scroll-tint" aria-hidden="true"></div>
       <div class="ew-scroll-intro" id="ew-scroll-intro"><span class="ew-scroll-kicker">EVERYWEAR / EDICIÓN 01</span><h1>Tu estilo<br/><em>en movimiento.</em></h1><p>Prendas que hablan de ti. Descubre una selección creada para acompañarte a donde vayas.</p><span class="ew-scroll-intro-foot">DESLIZA PARA DESCUBRIR <span aria-hidden="true">↓</span></span></div>
       <div class="ew-scroll-stories" aria-label="Momentos de la colección">
-        <article class="ew-scroll-story" data-start=".18" data-end=".39"><span>01 / EVERY DAY</span><h2>Un look,<br/><em>mil posibilidades.</em></h2><p>Para todos esos planes que empiezan sin avisar.</p></article>
-        <article class="ew-scroll-story" data-start=".41" data-end=".62"><span>02 / THE DETAILS</span><h2>La magia<br/><em>está en los detalles.</em></h2><p>Piezas especiales, fáciles de hacer tuyas.</p></article>
-        <article class="ew-scroll-story" data-start=".64" data-end=".82"><span>03 / CURATED STYLE</span><h2>Every wear.<br/><em>Every version of you.</em></h2><p>Tu acceso a una nueva forma de vestir.</p></article>
-        <article class="ew-scroll-story" data-start=".84" data-end="1.01"><span>04 / YOUR NEXT LOOK</span><h2>Tu próximo<br/><em>favorito te espera.</em></h2><p>La colección está a un paso.</p><a class="ew-scroll-action" href="#/catalogo">Explorar catálogo <svg class="ew-scroll-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 17 17 7M8 7h9v9"/></svg></a></article>
+        <article class="ew-scroll-story" data-start=".26" data-end=".49"><span>01 / EVERY DAY</span><h2>Un look,<br/><em>mil posibilidades.</em></h2><p>Para todos esos planes que empiezan sin avisar.</p></article>
+        <article class="ew-scroll-story" data-start=".53" data-end=".73"><span>02 / CURATED STYLE</span><h2>Every wear.<br/><em>Every version of you.</em></h2><p>Tu acceso a una nueva forma de vestir.</p></article>
+        <article class="ew-scroll-story" data-start=".77" data-end="1.05"><span>03 / YOUR NEXT LOOK</span><h2>Tu próximo<br/><em>favorito te espera.</em></h2><p>La colección está a un paso.</p><a class="ew-scroll-action" href="#/catalogo">Explorar catálogo <svg class="ew-scroll-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 17 17 7M8 7h9v9"/></svg></a></article>
       </div>
       <div class="ew-scroll-progress" aria-hidden="true"><div class="ew-scroll-progress-track"><span id="ew-scroll-progress-fill"></span></div></div>
     </div>
@@ -79,7 +78,7 @@ export function initScrollHero() {
     const index=nearest(desired);
     if(index>=0 && index!==active){ active=index; frame.src=images[index]; }
     if(bar) bar.style.transform=`scaleY(${p})`;
-    const introAlpha=Math.max(0,Math.min(1,(.22-p)/.16));
+    const introAlpha=Math.max(0,Math.min(1,(.24-p)/.12));
     if(intro){intro.style.opacity=String(introAlpha);intro.style.visibility=introAlpha<.02?'hidden':'visible';}
     for (const c of stories) {
       const a=Number(c.dataset.start),b=Number(c.dataset.end);
