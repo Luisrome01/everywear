@@ -798,3 +798,21 @@ button, a, input, select {
     transition-delay: 0ms !important;
   }
 }
+
+/* WhatsApp handoff: readable quote and one-tap copy, retaining official Business link */
+.ew-whatsapp-order-dialog{position:fixed;inset:0;margin:auto;width:min(92vw,520px);max-height:90dvh;overflow:auto;border:1px solid #e4d1cd;border-radius:20px;padding:0;color:#422b34;background:#fffaf5;box-shadow:0 30px 90px rgba(36,17,25,.25);z-index:10000}
+.ew-whatsapp-order-dialog::backdrop{background:rgba(33,17,24,.62);backdrop-filter:blur(4px)}
+.ew-whatsapp-order-body{padding:clamp(22px,5vw,38px)}
+.ew-whatsapp-order-kicker{font-size:10px;font-weight:600;letter-spacing:.19em;color:#8e5e70}
+.ew-whatsapp-order-body h2{font:400 clamp(26px,5vw,36px)/1.15 Georgia,serif;margin:16px 0 12px;color:#592c40}
+.ew-whatsapp-order-body p{font-size:13px;line-height:1.65;color:#796572;margin:0 0 16px}
+.ew-whatsapp-order-body textarea{display:block;width:100%;height:clamp(170px,35vh,270px);resize:vertical;background:#fff;border:1px solid #d9c5c8;border-radius:10px;padding:15px;font:13px/1.5 system-ui,sans-serif;color:#40343c;outline-color:#883d59}
+.ew-whatsapp-order-body .ew-whatsapp-order-feedback{font-size:12px;color:#85415d;margin-top:12px;margin-bottom:15px}
+.ew-whatsapp-order-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ew-whatsapp-copy,.ew-whatsapp-open{display:flex;align-items:center;justify-content:center;min-height:48px;padding:10px;border:1px solid #7d354f;border-radius:7px;font:600 12px/1.3 system-ui,sans-serif;letter-spacing:.02em;text-align:center;cursor:pointer}
+.ew-whatsapp-copy{color:#7d354f;background:transparent}
+.ew-whatsapp-open{color:#fff;background:#7d354f;text-decoration:none}
+.ew-whatsapp-copy:hover{background:#f5e7e9}
+.ew-whatsapp-open:hover{background:#60253b}
+.ew-whatsapp-cancel{display:block;margin:19px auto 0;padding:8px;border:0;background:none;color:#8b737a;font-size:12px;cursor:pointer;text-decoration:underline}
+@media(max-width:440px){.ew-whatsapp-order-actions{grid-template-columns:1fr}.ew-whatsapp-order-body textarea{height:210px}}
