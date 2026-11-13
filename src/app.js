@@ -254,7 +254,7 @@ function home() {
             <div class="form-row"><label>Tu talla (opcional)<input name="size" placeholder="Ej. S / M / 28" maxlength="40" /></label><label>Presupuesto (opcional)<input name="budget" placeholder="Ej. $100" maxlength="50" /></label></div>
             <label>Cuéntanos un poco más<textarea name="notes" rows="3" placeholder="Colores, inspiración, fecha, ocasión..." maxlength="500"></textarea></label>
             <button type="submit" class="button button-dark form-submit"><span>Enviar a WhatsApp</span>${icon("arrowup",18)}</button>
-            <p class="form-foot">Abriremos el chat de Everywear en WhatsApp. Comparte allí los detalles de tu solicitud.</p>
+            <p class="form-foot">Prepararemos tu solicitud para copiarla y enviarla al WhatsApp de Everywear.</p>
           </form>
         </div>
       </section>
@@ -356,7 +356,7 @@ function basket() {
         if (!p) return "";
         return `<article class="cart-item"><img src="${p.image}" alt="" /><div class="cart-info"><span class="cart-category">${p.category}</span><h3>${htmlSafe(p.name)}</h3><p>${htmlSafe(item.color)} ${item.size ? "· Talla " + htmlSafe(item.size) : ""}</p><strong>${money(p.price * item.qty)}</strong><div class="cart-item-bottom"><div class="quantity-stepper"><button data-action="qty-down" data-index="${i}" aria-label="Quitar una unidad">${icon("minus",15)}</button><span>${item.qty}</span><button data-action="qty-up" data-index="${i}" aria-label="Añadir una unidad">${icon("plus",15)}</button></div><button data-action="remove-item" data-index="${i}" class="remove-item" aria-label="Eliminar producto">${icon("trash",17)}</button></div></div></article>`;
       }).join("")}</div>
-      <div class="drawer-checkout"><div class="subtotal-line"><span>Subtotal</span><strong>${money(cartTotal())}</strong></div><p>Los precios son de demostración. Al abrir WhatsApp, comparte los artículos de tu selección para confirmar total, disponibilidad y entrega.</p><button data-action="checkout" class="button button-dark checkout-button"><span>Finalizar por WhatsApp</span>${icon("whatsapp",20)}</button><a href="#/catalogo" data-action="close-cart" class="keep-shopping">Seguir explorando ${icon("arrow",16)}</a></div>`
+      <div class="drawer-checkout"><div class="subtotal-line"><span>Subtotal</span><strong>${money(cartTotal())}</strong></div><p>Los precios son de demostración. Podrás copiar el pedido con nombres, tallas, cantidades, precios y subtotal antes de abrir WhatsApp.</p><button data-action="checkout" class="button button-dark checkout-button"><span>Finalizar por WhatsApp</span>${icon("whatsapp",20)}</button><a href="#/catalogo" data-action="close-cart" class="keep-shopping">Seguir explorando ${icon("arrow",16)}</a></div>`
       : `<div class="empty-cart"><div class="empty-cart-icon">${icon("bag",42)}</div><h3>Tu selección está esperando.</h3><p>Agrega tus piezas favoritas y prepara tu pedido en un solo lugar.</p><a href="#/catalogo" data-action="close-cart" class="button button-dark"><span>Explorar catálogo</span>${icon("arrowup",17)}</a></div>`}
     </aside></div>`;
 }
@@ -497,17 +497,65 @@ function render() {
   initTVRotation();
   initScrollHero();
 }
+// The WhatsApp Business short link does not support reliable dynamic prefilled
+// text. Preserve the exact recipient and make the generated order easy to copy.
 function openWhatsApp(message) {
-  window.open(waLink(message), "_blank", "noopener,noreferrer");
+  document.getElementById("ew-whatsapp-order-dialog")?.remove();
+  const dialog=document.createElement("dialog");
+  dialog.id="ew-whatsapp-order-dialog";
+  dialog.className="ew-whatsapp-order-dialog";
+  dialog.setAttribute("aria-labelledby","ew-whatsapp-order-title");
+  dialog.innerHTML=`<div class="ew-whatsapp-order-body">
+    <span class="ew-whatsapp-order-kicker">EVERYWEAR / TU PEDIDO</span>
+    <h2 id="ew-whatsapp-order-title">Tu mensaje está listo</h2>
+    <p>Copia tu pedido y pégalo en el chat oficial de Everywear en WhatsApp.</p>
+    <textarea id="ew-whatsapp-order-text" readonly aria-label="Mensaje de cotización"></textarea>
+    <p class="ew-whatsapp-order-feedback" id="ew-whatsapp-order-feedback" role="status" aria-live="polite">Primero copia el mensaje, luego abre el chat.</p>
+    <div class="ew-whatsapp-order-actions">
+      <button class="ew-whatsapp-copy" type="button" id="ew-whatsapp-copy">Copiar pedido</button>
+      <a class="ew-whatsapp-open" href="${WHATSAPP_URL}" target="_blank" rel="noopener noreferrer">Abrir WhatsApp ↗</a>
+    </div>
+    <button type="button" class="ew-whatsapp-cancel" id="ew-whatsapp-cancel">Volver a la tienda</button>
+  </div>`;
+  document.body.appendChild(dialog);
+  const area=dialog.querySelector("#ew-whatsapp-order-text");
+  const feedback=dialog.querySelector("#ew-whatsapp-order-feedback");
+  area.value=message;
+  dialog.querySelector("#ew-whatsapp-copy").addEventListener("click",async()=>{
+    try {
+      if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(area.value);
+      else {
+        area.focus();area.select();
+        if(!document.execCommand("copy"))throw Error("La copia automática no está disponible");
+      }
+      feedback.textContent="¡Pedido copiado! Abre WhatsApp y pégalo en el chat.";
+      dialog.querySelector("#ew-whatsapp-copy").textContent="✓ Pedido copiado";
+    } catch(error) {
+      area.focus();area.select();
+      feedback.textContent="Seleccionamos el mensaje. Cópialo manualmente antes de abrir WhatsApp.";
+    }
+  });
+  const cleanup=()=>{dialog.remove();};
+  dialog.querySelector("#ew-whatsapp-cancel").addEventListener("click",()=>dialog.close());
+  dialog.addEventListener("close",cleanup,{once:true});
+  dialog.showModal();
 }
 function orderMessage() {
-  const lines = ["¡Hola, Everywear! 🤍", "Vengo de la página web y quiero consultar mi selección:", ""];
-  state.cart.forEach(item => {
+  const lines = ["¡Hola! Vengo de la página de Everywear y quisiera cotizar mi pedido.", ""];
+  state.cart.forEach((item,index) => {
     const p = productOf(item.id);
     if (!p) return;
-    lines.push("• " + p.name + " — " + item.color + (item.size ? " / Talla " + item.size : "") + " / Cant. " + item.qty + " / " + money(p.price * item.qty));
+    lines.push(
+      "Producto " + (index+1) + ": " + p.name,
+      "Color: " + item.color,
+      "Talla: " + (item.size || "Única"),
+      "Cantidad: " + item.qty,
+      "Precio unitario: " + money(p.price),
+      "Total del producto: " + money(p.price * item.qty),
+      ""
+    );
   });
-  lines.push("", "Subtotal referencial: " + money(cartTotal()), "¿Me confirman disponibilidad, precio final y opciones de entrega? Gracias.");
+  lines.push("Subtotal general: " + money(cartTotal()), "", "¿Me pueden confirmar disponibilidad y precio final? ¡Gracias!");
   return lines.join("\n");
 }
 function addToBag() {
