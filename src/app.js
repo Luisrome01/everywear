@@ -7,7 +7,7 @@ import "./styles.css";
 import "./scroll-hero.css";
 
 const root = document.getElementById("app");
-const PHONE = String(import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
+const WHATSAPP_URL = "https://wa.me/message/DSVJNNXTXSVML1";
 const CART_KEY = "everywear_selection_v1";
 let tvSlideNumber = 0;
 const instagram = "https://www.instagram.com/everywear.ve?srtk=MTJycHJxNXl2eXZyOQ==";
@@ -52,7 +52,7 @@ const icon = (name, size = 20) => `<svg width="${size}" height="${size}" viewBox
 const logo = (small = false) => `<span class="brand${small ? " brand-small" : ""}" aria-label="Everywear"><span class="brand-every">every</span><span class="brand-wear">wear.</span></span>`;
 const cartCount = () => state.cart.reduce((sum, item) => sum + item.qty, 0);
 const cartTotal = () => state.cart.reduce((sum, item) => sum + ((PRODUCTS.find(p => p.id === item.id)?.price || 0) * item.qty), 0);
-const waLink = message => "https://wa.me/" + PHONE + "?text=" + encodeURIComponent(message);
+const waLink = () => WHATSAPP_URL;
 const persist = () => localStorage.setItem(CART_KEY, JSON.stringify(state.cart));
 const productOf = id => PRODUCTS.find(p => p.id === id);
 
@@ -254,7 +254,7 @@ function home() {
             <div class="form-row"><label>Tu talla (opcional)<input name="size" placeholder="Ej. S / M / 28" maxlength="40" /></label><label>Presupuesto (opcional)<input name="budget" placeholder="Ej. $100" maxlength="50" /></label></div>
             <label>Cuéntanos un poco más<textarea name="notes" rows="3" placeholder="Colores, inspiración, fecha, ocasión..." maxlength="500"></textarea></label>
             <button type="submit" class="button button-dark form-submit"><span>Enviar a WhatsApp</span>${icon("arrowup",18)}</button>
-            <p class="form-foot">Te llevaremos a WhatsApp con tu solicitud lista para enviar. ${PHONE ? "" : "El número de la tienda aún está por configurar."}</p>
+            <p class="form-foot">Abriremos el chat de Everywear en WhatsApp. Comparte allí los detalles de tu solicitud.</p>
           </form>
         </div>
       </section>
@@ -356,7 +356,7 @@ function basket() {
         if (!p) return "";
         return `<article class="cart-item"><img src="${p.image}" alt="" /><div class="cart-info"><span class="cart-category">${p.category}</span><h3>${htmlSafe(p.name)}</h3><p>${htmlSafe(item.color)} ${item.size ? "· Talla " + htmlSafe(item.size) : ""}</p><strong>${money(p.price * item.qty)}</strong><div class="cart-item-bottom"><div class="quantity-stepper"><button data-action="qty-down" data-index="${i}" aria-label="Quitar una unidad">${icon("minus",15)}</button><span>${item.qty}</span><button data-action="qty-up" data-index="${i}" aria-label="Añadir una unidad">${icon("plus",15)}</button></div><button data-action="remove-item" data-index="${i}" class="remove-item" aria-label="Eliminar producto">${icon("trash",17)}</button></div></div></article>`;
       }).join("")}</div>
-      <div class="drawer-checkout"><div class="subtotal-line"><span>Subtotal</span><strong>${money(cartTotal())}</strong></div><p>Los precios son de demostración. En WhatsApp confirmaremos el total, la disponibilidad y la entrega.</p><button data-action="checkout" class="button button-dark checkout-button"><span>Finalizar por WhatsApp</span>${icon("whatsapp",20)}</button><a href="#/catalogo" data-action="close-cart" class="keep-shopping">Seguir explorando ${icon("arrow",16)}</a></div>`
+      <div class="drawer-checkout"><div class="subtotal-line"><span>Subtotal</span><strong>${money(cartTotal())}</strong></div><p>Los precios son de demostración. Al abrir WhatsApp, comparte los artículos de tu selección para confirmar total, disponibilidad y entrega.</p><button data-action="checkout" class="button button-dark checkout-button"><span>Finalizar por WhatsApp</span>${icon("whatsapp",20)}</button><a href="#/catalogo" data-action="close-cart" class="keep-shopping">Seguir explorando ${icon("arrow",16)}</a></div>`
       : `<div class="empty-cart"><div class="empty-cart-icon">${icon("bag",42)}</div><h3>Tu selección está esperando.</h3><p>Agrega tus piezas favoritas y prepara tu pedido en un solo lugar.</p><a href="#/catalogo" data-action="close-cart" class="button button-dark"><span>Explorar catálogo</span>${icon("arrowup",17)}</a></div>`}
     </aside></div>`;
 }
